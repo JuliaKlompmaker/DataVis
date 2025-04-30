@@ -157,7 +157,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             const r1 = y(d.value);
 
             // If outside angle, clamp
-            if (angle < startAngle) angle = endAngle ;
+            if (angle < startAngle) angle = endAngle; // this is the problem line!!
             if (angle > endAngle) angle = endAngle;
 
             // If outside radius, clamp
