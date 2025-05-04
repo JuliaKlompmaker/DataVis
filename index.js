@@ -65,30 +65,43 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             .padRadius(innerRadius));
 
 
-    let nodes = [];
+            const stackedData = d3.stack().keys(data.columns.slice(1))(data);
+            let nodes = [];
 
-    data.forEach(d => {
-        data.columns.slice(1).forEach(type => {
-            const count = Math.floor(d[type] * 2); // Adjust granularity
-            const angle = x(d.Week) + x.bandwidth() / 2 - Math.PI / 2;
-            const radius = (y(d[type]) + y(0)) / 2; // Middle of the arc
-            console.log(data)
+            stackedData.forEach(d => {
+                const key = d.key;
 
-            for (let i = 0; i < count; i++) {
-                nodes.push({
-                    week: d.Week,
-                    type: type,
-                    value: d[type],
-                    color: dotColor(type),
-                    angle: angle,
-                    radius: radius,
+                d.forEach(d => {
+                    const week = d.data.Week;
+                    const angle = x(week) + x.bandwidth() / 2 - Math.PI / 2;
 
-                    x: radius * Math.cos(angle),
-                    y: radius * Math.sin(angle),
+                    const inner = y(d[0]); // start of this type's bar
+                    const outer = y(d[1]); // end of this type's bar
+
+                    const count = Math.floor((d[1] - d[0]) * 2); // Adjust multiplier
+
+                    for (let i = 0; i < count; i++) {
+                        // Random radius within the slice
+                        const r = inner + Math.random() * (outer - inner);
+
+                        nodes.push({
+                            week: week,
+                            type: key,
+                            value: d[1] - d[0],
+                            angle: angle,
+                            radius: r,
+                            color: dotColor(key),
+                            x: r * Math.cos(angle) + (Math.random() - 0.5),
+                            y: r * Math.sin(angle) + (Math.random() - 0.5),
+                            r0: inner,
+                            r1: outer,
+                            a0: x(week) - Math.PI / 2,
+                            a1: x(week) + x.bandwidth() - Math.PI / 2
+                        });
+                    }
                 });
-            }
-        });
-    });
+            });
+
 
     // bee-swarm simulation
     const simulation = d3.forceSimulation(nodes)
@@ -141,12 +154,12 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         for (let i = 0; i < nodes.length; i++) {
             const d = nodes[i];
 
-            // Compute current polar coords
             let r = Math.sqrt(d.x * d.x + d.y * d.y);
             let angle = Math.atan2(d.y, d.x);
-
-            // Normalize angle to [0, 2π)
             if (angle < 0) angle += 2 * Math.PI;
+
+            let a = (angle + 2 * Math.PI) % (2 * Math.PI);
+            let a0 = (d.a0 + 2 * Math.PI) % (2 * Math.PI);
 
             /*
             .innerRadius(function (d) { return y(d[0]); })
@@ -156,44 +169,28 @@ d3.csv("pollenData.csv", function (d, i, columns) {
               .padAngle(0.01)
               .padRadius(innerRadius));
             */
+            let a1 = (d.a1 + 2 * Math.PI) % (2 * Math.PI);
 
-              const startAngle = x(d.week) - Math.PI / 2;
-              const endAngle = x(d.week) + x.bandwidth() - Math.PI / 2;
-            const r0 = y(0);
-            const r1 = y(d.value);
-             // If outside angle, clamp
-            const epsilon = 0.001;
-
-            function normalizeAngle(a) {
-                return (a + 2 * Math.PI) % (2 * Math.PI);
-            }
-
-            let a = normalizeAngle(angle);
-            let start = normalizeAngle(startAngle);
-            let end = normalizeAngle(endAngle);
-
-            // Check if angle is inside the arc sector
-            const inArc = (start < end)
-                ? a >= start - epsilon && a <= end + epsilon
-                : a >= start - epsilon || a <= end + epsilon;  // handle wrap-around at 0/2π
+            const inArc = (a0 < a1)
+                ? a >= a0 && a <= a1
+                : a >= a0 || a <= a1;
 
             if (!inArc) {
-                // Snap to nearest edge
-                const distToStart = Math.abs(a - start);
-                const distToEnd = Math.abs(a - end);
-                angle = distToStart < distToEnd ? start : end;
+                const distToStart = Math.abs(a - a0);
+                const distToEnd = Math.abs(a - a1);
+                angle = distToStart < distToEnd ? d.a0 : d.a1;
             }
 
-
             // If outside radius, clamp
-            if (r < r0) r = r0;
-            if (r > r1) r = r1;
+            if (r < d.r0) r = d.r0;
+            if (r > d.r1) r = d.r1;
 
-            // Convert back to Cartesian
             d.x = r * Math.cos(angle);
             d.y = r * Math.sin(angle);
         }
     }
+
+    
 
     //Constant movement
     function randomJiggle() {
