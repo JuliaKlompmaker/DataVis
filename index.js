@@ -38,7 +38,16 @@ var dotColor = d3.scaleOrdinal()
   x.domain(data.map(function(d) { return d.Week; }));
   y.domain([0, d3.max(data, function(d) { return d.total; })]);
   z.domain(data.columns.slice(1));
-
+  let monthGroups = Array.from(
+    d3.group(data, (d) => d.Month),
+    ([month, weeks]) => {
+        let centerWeek = weeks[Math.floor(weeks.length / 2)];
+        let centerAngle = d3.mean(
+            weeks.map((w) => x(w.Week) + x.bandwidth() / 2)
+        );
+        return { Month: month, Week: centerWeek.Week, angle: centerAngle };
+    }
+  );
   g.append("g")
     .selectAll("g")
     .data(d3.stack().keys(data.columns.slice(1))(data))
@@ -58,16 +67,7 @@ var dotColor = d3.scaleOrdinal()
           .endAngle(function(d) { return x(d.data.Week) + x.bandwidth(); })
           .padAngle(0.01)
           .padRadius(innerRadius));
-          let monthGroups = Array.from(
-            d3.group(data, (d) => d.Month),
-            ([month, weeks]) => {
-                let centerWeek = weeks[Math.floor(weeks.length / 2)];
-                let centerAngle = d3.mean(
-                    weeks.map((w) => x(w.Week) + x.bandwidth() / 2)
-                );
-                return { Month: month, Week: centerWeek.Week, angle: centerAngle };
-            }
-          );
+
 
 
           const stackedData = d3.stack().keys(data.columns.slice(1))(data);
@@ -206,7 +206,7 @@ var dotColor = d3.scaleOrdinal()
   }
   var label = g.append("g")
     .selectAll("g")
-    .data(monthGroup)
+    .data(monthGroups)
     .enter().append("g")
       .attr("text-anchor", "middle")
       .attr("transform", function(d) { return "rotate(" + ((x(d.Week) + x.bandwidth() / 2) * 180 / Math.PI - 90) + ")translate(" + innerRadius + ",0)"; });
