@@ -37,7 +37,7 @@ var dotColor = d3.scaleOrdinal()
 
   x.domain(data.map(function(d) { return d.Week; }));
   y.domain([0, d3.max(data, function(d) { return d.total; })]);
-  z.domain(data.columns.slice(1));
+  z.domain(data.columns.slice(2));
   let monthGroups = Array.from(
     d3.group(data, (d) => d.Month),
     ([month, weeks]) => {
@@ -50,7 +50,7 @@ var dotColor = d3.scaleOrdinal()
   );
   g.append("g")
     .selectAll("g")
-    .data(d3.stack().keys(data.columns.slice(1))(data))
+    .data(d3.stack().keys(data.columns.slice(2))(data))
     .enter().append("g")
       .attr("fill", function(d) { return z(d.key); })
     .selectAll("path")
@@ -70,7 +70,7 @@ var dotColor = d3.scaleOrdinal()
 
 
 
-          const stackedData = d3.stack().keys(data.columns.slice(1))(data);
+          const stackedData = d3.stack().keys(data.columns.slice(2))(data);
           let nodes = [];
 
           stackedData.forEach(d => {
@@ -252,7 +252,7 @@ var dotColor = d3.scaleOrdinal()
 
       var legend = g.append("g")
       .selectAll("g")
-      .data(data.columns.slice(1).reverse())
+      .data(data.columns.slice(2).reverse())
       .enter().append("g")
       .attr("transform", function(d, i) { return "translate(-40," + (i - (data.columns.length - 1) / 2) * 20 + ")"; });
 
