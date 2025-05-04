@@ -82,7 +82,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                     color: dotColor(type),
                     angle: angle,
                     radius: radius,
-                    
+
                     x: radius * Math.cos(angle),
                     y: radius * Math.sin(angle),
                 });
@@ -94,9 +94,9 @@ d3.csv("pollenData.csv", function (d, i, columns) {
     const simulation = d3.forceSimulation(nodes)
         //.force("radial", d3.forceRadial(d => d.radius, 0, 0).strength(0.5))
         //.force("jiggle", d3.forceManyBody().strength(-0.2))
-        .force("collide", d3.forceCollide(3).strength(1))
+        .force("collide", d3.forceCollide(3).strength(2))
         .force("x", d3.forceX(d => d.radius * Math.cos(d.angle)).strength(0.5))
-        .force("y", d3.forceY(d => d.radius * Math.sin(d.angle)).strength(0.1))
+        .force("y", d3.forceY(d => d.radius * Math.sin(d.angle)).strength(1))
         .force("constrain", () => forceRadialBarConstraint())
         /*.force("boundary", forceBoundary(function (d) {
             //console.log(d)
@@ -110,9 +110,15 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         }))*/
         // circle radius
         //.alphaDecay(0.005)  // default is 0.0228
-        .on("tick", ticked);
+        //.on("tick", ticked); //removed to make it move constantly
 
-        
+        //make it move constantly
+        d3.timer(() => {
+            randomJiggle();
+            simulation.tick();
+            ticked();
+        });
+
 
     const swarm = g.append("g")
         .selectAll("circle")
@@ -151,14 +157,33 @@ d3.csv("pollenData.csv", function (d, i, columns) {
               .padRadius(innerRadius));
             */
 
-            const startAngle = x(d.week);
-            const endAngle = x(d.week) + x.bandwidth();
+              const startAngle = x(d.week) - Math.PI / 2;
+              const endAngle = x(d.week) + x.bandwidth() - Math.PI / 2;
             const r0 = y(0);
             const r1 = y(d.value);
+             // If outside angle, clamp
+            const epsilon = 0.001;
 
-            // If outside angle, clamp
-            if (angle < startAngle) angle = endAngle; // this is the problem line!!
-            if (angle > endAngle) angle = endAngle;
+            function normalizeAngle(a) {
+                return (a + 2 * Math.PI) % (2 * Math.PI);
+            }
+
+            let a = normalizeAngle(angle);
+            let start = normalizeAngle(startAngle);
+            let end = normalizeAngle(endAngle);
+
+            // Check if angle is inside the arc sector
+            const inArc = (start < end)
+                ? a >= start - epsilon && a <= end + epsilon
+                : a >= start - epsilon || a <= end + epsilon;  // handle wrap-around at 0/2π
+
+            if (!inArc) {
+                // Snap to nearest edge
+                const distToStart = Math.abs(a - start);
+                const distToEnd = Math.abs(a - end);
+                angle = distToStart < distToEnd ? start : end;
+            }
+
 
             // If outside radius, clamp
             if (r < r0) r = r0;
@@ -170,6 +195,13 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         }
     }
 
+    //Constant movement
+    function randomJiggle() {
+        nodes.forEach(d => {
+            d.vx += (Math.random() - 0.5) * 0.2;  // tweak multiplier to control motion
+            d.vy += (Math.random() - 0.5) * 0.2;
+        });
+    }
 
 
     var label = g.append("g")
