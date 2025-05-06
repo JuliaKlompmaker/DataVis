@@ -13,7 +13,15 @@ var y = d3.scaleRadial()
     .range([innerRadius, outerRadius]);
 
 var z = d3.scaleOrdinal()
-    .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+    .range([
+        "#395c8d", // #395c8d 
+        "#6967a8", // #6967a8
+        "#714092", // #714092
+        "#a14aa1", // #a14aa1
+        "#a05d56", // #a05d56
+        "#d0743c", // #d0743c
+        "#ff8c00" // #ff8c00
+    ]);
 
     const line = d3.lineRadial()
     .curve(d3.curveLinearClosed)
@@ -53,6 +61,7 @@ var dotColor = d3.scaleOrdinal()
     .data(d3.stack().keys(data.columns.slice(2))(data))
     .enter().append("g")
       .attr("fill", function(d) { return z(d.key); })
+      .style("opacity", 0.25)
     .selectAll("path")
     .data(function(d) { return d; })
       .enter().append("path")
@@ -95,7 +104,7 @@ var dotColor = d3.scaleOrdinal()
                           value: d[1] - d[0],
                           angle: angle,
                           radius: r,
-                          color: dotColor(key),
+                          color: z(key),
                           x: r * Math.cos(angle) + (Math.random() - 0.5),
                           y: r * Math.sin(angle) + (Math.random() - 0.5),
                           r0: inner,
