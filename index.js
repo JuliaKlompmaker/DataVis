@@ -147,18 +147,9 @@ function drawBandChart(bandChartData) {
     .attr("width", bandWidth + margin.left + margin.right)
     .attr("height", bandHeight + margin.top + margin.bottom)
     .append("g")
-      .attr("transform", `translate(${margin.left-60},${margin.top})`)
+    .attr("transform", `translate(${margin.left-60},${margin.top})`)
 
   addInfoBox()
-
-  const tooltip = d3.select("body")
-    .append("div")
-    .style("position", "absolute")
-    .style("background", "white")
-    .style("border", "1px")
-    .style("padding", "5px")
-    .style("border-radius", "5px")
-    .style("opacity", 0)
 
   const keys = Object.keys(bandChartData[0]).slice(1); // pollen types
   const x = d3.scaleLinear()
@@ -168,9 +159,9 @@ function drawBandChart(bandChartData) {
   const yBand = d3.scaleBand()
     .domain(keys)
     .range([0, bandHeight])
-    .paddingInner(0.01);
+    .paddingInner(0.1);
 
-  drawSeries({svg, x, yBand, keys, bandChartData, tooltip, bandWidth});
+  drawSeries({svg, x, yBand, keys, bandChartData, bandWidth});
 
   // X-axis
   svg.append("g")
@@ -178,7 +169,7 @@ function drawBandChart(bandChartData) {
     .call(d3.axisBottom(x).ticks(bandChartData.length).tickFormat((d, i) => bandChartData[i].Week));
 }
 
-function drawSeries({svg, x, yBand, keys, bandChartData, tooltip, bandWidth}) {
+function drawSeries({svg, x, yBand, keys, bandChartData, bandWidth}) {
   keys.forEach((key, i) => {
     const series = bandChartData.map((d, index) => ({
       value: +d[key],
@@ -195,7 +186,7 @@ function drawSeries({svg, x, yBand, keys, bandChartData, tooltip, bandWidth}) {
       .x((d, i) => x(i))
       .y0(() => yBand.bandwidth()) // bottom of image
       .y1(d => localY(d.value))
-      .curve(d3.curveBasis);
+      .curve(d3.curveMonotoneX)
 
     // Define clipPath based on the area shape
     svg.append("clipPath")
@@ -219,7 +210,7 @@ function drawSeries({svg, x, yBand, keys, bandChartData, tooltip, bandWidth}) {
     const line = d3.line()
       .x((d, i) => x(i))
       .y(d => localY(d.value))
-      .curve(d3.curveBasis);
+      .curve(d3.curveMonotoneX);
 
     svg.append("path")
       .datum(series)
@@ -245,9 +236,6 @@ function drawSeries({svg, x, yBand, keys, bandChartData, tooltip, bandWidth}) {
         .attr("r", 7)
         .attr("fill", "transparent")
         .on("mouseover", () => {
-          tooltip.transition().duration(200).style("opacity", 1)
-            .text(point.value)
-
           d3.select("#pollen-type").text(`Type - ${key}`)
           d3.select("#pollen-week").text(`Week - ${point.week}`)
           d3.select("#pollen-value").text(`Pollen count - ${point.value} pollen/m³`)
