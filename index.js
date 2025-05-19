@@ -320,9 +320,6 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             }
         }
 
-
-
-
         var label = g.append("g")
             .selectAll("g")
             .data(monthGroups)
@@ -330,10 +327,13 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             .attr("text-anchor", "middle")
             .attr("transform", function (d) { return "rotate(" + ((x(d.Week) + x.bandwidth() / 2) * 180 / Math.PI - 90) + ")translate(" + innerRadius + ",0)"; });
 
-        label.append("line").attr("x2", -5).attr("stroke", "#000");
+        label.append("line")
+            .attr("class", "label-line")
+            .attr("x2", -5)
 
         label
             .append("text")
+            .attr("class", "label-text")
             .attr("transform", function (d) {
                 return (d.angle + Math.PI / 2) % (2 * Math.PI) < Math.PI
                     ? "rotate(90)translate(0,16)"
@@ -352,23 +352,21 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 
         yTick
             .append("circle")
-            .attr("fill", "none")
-            .attr("stroke", "#000")
+            .attr("class", "y-tick-circle")
             .attr("r", y);
 
         yTick
             .append("text")
+            .attr("class", "y-tick-text-bg")
             .attr("y", function (d) {
                 return -y(d);
             })
             .attr("dy", "0.35em")
-            .attr("fill", "none")
-            .attr("stroke", "#fff")
-            .attr("stroke-width", 5)
             .text(y.tickFormat(5, "s"));
 
         yTick
             .append("text")
+            .attr("class", "y-tick-text")
             .attr("y", function (d) {
                 return -y(d);
             })
@@ -376,6 +374,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             .text(y.tickFormat(5, "s"));
 
         yAxis.append("text")
+            .attr("class", "y-axis-title")
             .attr("y", function (d) { return -outerRadius; })
             .attr("dy", "-3em")
             .text("Number of pollen per m3 of air");
@@ -420,34 +419,30 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         const isLeftSide = (angle > Math.PI / 2 || angle < -Math.PI / 2)
 
         g.append("line")
+            .attr("class", "clock-arm")
             .attr("x1", x1)
             .attr("y1", y1)
             .attr("x2", x2)
             .attr("y2", y2)
-            .attr("stroke", "maroon")
-            .style("stroke-width", 2)
 
 
         const labelGroup = g.append("g")
             .attr("transform", `translate(${x2}, ${y2}) rotate(${(angle * 180 / Math.PI)})`);
 
         labelGroup.append("text")
+            .attr("class", "clock-text")
             .text(getDate(date))
             .attr("dy", "0.35em")
             .attr("text-anchor", isLeftSide ? "start" : "end")
-            .attr("font-size", "12px")
-            .style("font-weight", "bold")
-            .attr("dominant-baseline", "hanging")
-            .attr("fill", "maroon")
             .attr("transform", function () {
                 return isLeftSide ? "rotate(180)" : null;
             });
 
-            legend.on("mouseover", function () {
-                d3.select(this).select("text").style("font-weight", "bold");
-            }).on("mouseout", function () {
-                d3.select(this).select("text").style("font-weight", "normal");
-            });
+        legend.on("mouseover", function () {
+            d3.select(this).select("text").style("font-weight", "bold");
+        }).on("mouseout", function () {
+            d3.select(this).select("text").style("font-weight", "normal");
+        });
 
         legend.on("click", function (event, d) {
             selectedKey = (selectedKey === d) ? null : d
@@ -519,14 +514,9 @@ d3.csv("pollenData.csv", function (d, i, columns) {
     });
 
 function addTitle(){
-    d3.select("body").append("div")//.text("title here")
+    d3.select("body").append("div")
+    .attr("class", "title")
     .attr("transform", `translate(20,20)`)
-    .style("position", "absolute")
-    .style("top", "0px")
-    .style("left", "40px")
-    .style("width", "600px")
-    //.style("padding", "10px")
-    .style("font-family", "sans-serif")
     .html(`<h1>Pollen in Copenhagen</h1>`)
 }
 
@@ -536,14 +526,6 @@ function addPollenBox(){
     d3.select("body")
     .append("div")
     .attr("id", "pollen-box")
-    .style("position", "absolute")
-    .style("top", "50px")
-    .style("right", "20px")
-    .style("width", "300px")
-    .style("padding", "10px")
-    .style("border", "1px solid #ccc")
-    .style("background-color", "#f9f9f9")
-    .style("font-family", "sans-serif")
     .html(`<h3 style="margin-top: 0;">Pollen Info</h3>
           <p id="pollen-type">Type —</p>
           <p id="pollen-week">Week —</p>
@@ -590,15 +572,6 @@ function addInfoBox() {
     d3.select("body")
     .append("div")
     .attr("id", "info-box")
-    .style("position", "absolute")
-    .style("top", "300px")
-    .style("right", "20px")
-    .style("width", "340px")
-    .style("padding", "10px")
-    .style("border", "1px solid #ccc")
-    .style("background-color", "#f9f9f9")
-    .style("font-family", "sans-serif")
-    .style("line-height", "1.5")
     .html(`
             <h3 id="info-head" style="margin-top: 0; font-size: 1.2em;">About This Visualization</h3>
             <p id="pollen-info">

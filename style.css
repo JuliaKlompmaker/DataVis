@@ -1,0 +1,93 @@
+/* Title */
+.title {
+    position: absolute;
+    top: 0px;
+    left: 40px;
+    width: 600px;
+    font-family: sans-serif;
+}
+
+
+/* Axis and label styles */
+.label-line {
+  stroke: #000;
+}
+
+.label-text {
+  text-anchor: middle;
+  font-family: sans-serif;
+  font-size: 11px;
+}
+
+/* Y axis circles and labels */
+.y-tick-circle {
+  fill: none;
+  stroke: #000;
+}
+
+.y-tick-text-bg {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 5;
+}
+
+.y-tick-text {
+  fill: black;
+  font-size: 10px;
+  text-anchor: middle;
+}
+
+.y-axis-title {
+  text-anchor: middle;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Clock arm */
+.clock-arm {
+    stroke: maroon;
+    stroke-width: 2;
+}
+
+.clock-text {
+    font-size: 12px;
+    font-weight: bold;
+    fill: maroon;
+    dominant-baseline: hanging;
+}
+
+
+/* Info boxes */
+
+#pollen-box, #info-box {
+  position: absolute;
+  right: 20px;
+  width: 300px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  font-family: sans-serif;
+  line-height: 1.5;
+}
+
+#pollen-box {
+  top: 50px;
+}
+
+#info-box {
+  top: 300px;
+  width: 340px; /* override width for info-box */
+}
+
+#info-box h3,
+#pollen-box h3 {
+  margin-top: 0;
+  font-size: 1.2em;
+}
+
+#pollen-type,
+#pollen-week,
+#pollen-value,
+#pollen-description {
+  margin: 0.2em 0;
+}
