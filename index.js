@@ -367,7 +367,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
     var currentWeek = getWeek(date)
     var angle = x(currentWeek) + x.bandwidth() / 2 - Math.PI / 2
 
-    const offset = 6.5 * 10
+    const offset = 6.5 * 12 // char size * 12 chars
 
     var x1 = innerRadius * Math.cos(angle)
     var y1 = innerRadius * Math.sin(angle)
