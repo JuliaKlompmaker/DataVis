@@ -304,9 +304,6 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             }
         }
 
-
-
-
         var label = g.append("g")
             .selectAll("g")
             .data(monthGroups)
@@ -314,10 +311,13 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             .attr("text-anchor", "middle")
             .attr("transform", function (d) { return "rotate(" + ((x(d.Week) + x.bandwidth() / 2) * 180 / Math.PI - 90) + ")translate(" + innerRadius + ",0)"; });
 
-        label.append("line").attr("x2", -5).attr("stroke", "#000");
+        label.append("line")
+            .attr("class", "label-line")
+            .attr("x2", -5)
 
         label
             .append("text")
+            .attr("class", "label-text")
             .attr("transform", function (d) {
                 return (d.angle + Math.PI / 2) % (2 * Math.PI) < Math.PI
                     ? "rotate(90)translate(0,16)"
@@ -336,23 +336,21 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 
         yTick
             .append("circle")
-            .attr("fill", "none")
-            .attr("stroke", "#000")
+            .attr("class", "y-tick-circle")
             .attr("r", y);
 
         yTick
             .append("text")
+            .attr("class", "y-tick-text-bg")
             .attr("y", function (d) {
                 return -y(d);
             })
             .attr("dy", "0.35em")
-            .attr("fill", "none")
-            .attr("stroke", "#fff")
-            .attr("stroke-width", 5)
             .text(y.tickFormat(5, "s"));
 
         yTick
             .append("text")
+            .attr("class", "y-tick-text")
             .attr("y", function (d) {
                 return -y(d);
             })
@@ -360,6 +358,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             .text(y.tickFormat(5, "s"));
 
         yAxis.append("text")
+            .attr("class", "y-axis-title")
             .attr("y", function (d) { return -outerRadius; })
             .attr("dy", "-3em")
             .text("Number of pollen per m3 of air");
@@ -405,25 +404,21 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         const isLeftSide = (angle > Math.PI / 2 || angle < -Math.PI / 2)
 
         g.append("line")
+            .attr("class", "clock-arm")
             .attr("x1", x1)
             .attr("y1", y1)
             .attr("x2", x2)
             .attr("y2", y2)
-            .attr("stroke", "maroon")
-            .style("stroke-width", 2)
 
 
         const labelGroup = g.append("g")
             .attr("transform", `translate(${x2}, ${y2}) rotate(${(angle * 180 / Math.PI)})`);
 
         labelGroup.append("text")
+            .attr("class", "clock-text")
             .text(getDate(date))
             .attr("dy", "0.35em")
             .attr("text-anchor", isLeftSide ? "start" : "end")
-            .attr("font-size", "12px")
-            .style("font-weight", "bold")
-            .attr("dominant-baseline", "hanging")
-            .attr("fill", "maroon")
             .attr("transform", function () {
                 return isLeftSide ? "rotate(180)" : null;
             });
@@ -435,22 +430,22 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             });
 
         legend.on("click", function (event, d) {
+            selectedKey = (selectedKey === d) ? null : d
             legend.selectAll(".legend-text").style("font-weight", "normal");
 
-            if (selectedKey === d) {
-                selectedKey = null;
-                transitionOut(() => {
-                    drawStackedBars();
-                    drawDots();
-                });
 
+            transitionOut(() => {
+            addInfoBox()
+
+            if (selectedKey === null) {
+                drawStackedBars();
+                drawDots();
             } else {
-                selectedKey = d;
                 d3.select(this).select(".legend-text").style("font-weight", "bold");
-                transitionOut(() => {
-                    drawSingleBars(selectedKey);
-                    drawDots(selectedKey, false);
-                });
+
+                drawSingleBars(selectedKey);
+                drawDots(selectedKey, false);
+                updateInfoBox(selectedKey)
             }
 
         });
@@ -506,14 +501,9 @@ d3.csv("pollenData.csv", function (d, i, columns) {
     });
 
 function addTitle(){
-    d3.select("body").append("div")//.text("title here")
+    d3.select("body").append("div")
+    .attr("class", "title")
     .attr("transform", `translate(20,20)`)
-    .style("position", "absolute")
-    .style("top", "0px")
-    .style("left", "40px")
-    .style("width", "600px")
-    //.style("padding", "10px")
-    .style("font-family", "sans-serif")
     .html(`<h1>Pollen in Copenhagen</h1>`)
 }
 
@@ -523,14 +513,6 @@ function addPollenBox(){
     d3.select("body")
     .append("div")
     .attr("id", "pollen-box")
-    .style("position", "absolute")
-    .style("top", "50px")
-    .style("right", "20px")
-    .style("width", "300px")
-    .style("padding", "10px")
-    .style("border", "1px solid #ccc")
-    .style("background-color", "#f9f9f9")
-    .style("font-family", "sans-serif")
     .html(`<h3 style="margin-top: 0;">Pollen Info</h3>
           <p id="pollen-type">Type —</p>
           <p id="pollen-week">Week —</p>
@@ -572,22 +554,14 @@ function getPollenDescription(color) {
 }
 
 function addInfoBox() {
+    d3.select("#info-box").remove()
 
     d3.select("body")
     .append("div")
     .attr("id", "info-box")
-    .style("position", "absolute")
-    .style("top", "300px")
-    .style("right", "20px")
-    .style("width", "340px")
-    .style("padding", "10px")
-    .style("border", "1px solid #ccc")
-    .style("background-color", "#f9f9f9")
-    .style("font-family", "sans-serif")
-    .style("line-height", "1.5")
     .html(`
-            <h3 style="margin-top: 0; font-size: 1.2em;">About This Visualization</h3>
-            <p>
+            <h3 id="info-head" style="margin-top: 0; font-size: 1.2em;">About This Visualization</h3>
+            <p id="pollen-info">
                 In Latin pollen translates to fine dust. The specs of pollen are so small they are not immediately visible for the naked eye.
                 In this visualization we look at the six largest allergy-inducing pollen types: bunch, grass, birch, elm, hazel and alder.
                 <br>
@@ -599,5 +573,45 @@ function addInfoBox() {
 
             </p>
         `)
+
+}
+
+function updateInfoBox(type) {
+    const descriptions = {
+        Birch: `The birch is a common tree that resides in forests and bogs but can also be found in gardens and by
+        the street in cities. It is the most allergy inducing type of pollen from trees that Danes with pollen
+        allergy have a reaction to. <br><br>Birch usually has a short, but intense season from mid-April to mid-May.
+        The pollen of birches can travel several hundred kilometers by the wind. <br><br>If you suffer from allergy to birch,
+        you might also react to alder and hazel. If you have a cross allergy the most common foods that cause similar
+        symptoms are apples, tomatoes and hazelnuts.`,
+        Hazel: `Hazel is 3-5 meter tall bush from the birch-family. The pollen count for hazel is usually quite low,
+        despite pollen production being high. This is because hazel often grows in the shadow of larger trees in the
+        forest. This prohibits hazel pollen from spreading in the wind. <br><br> Free growing hazel in private gardens can
+        cause very local peaks that are not reported here. <br><br> The season for hazel pollen is from January to March.`,
+        Alder: `The most common types of alder trees found in Denmark are the black alder and grey alder.
+        The black alder is common by lake shores and streams. The grey alder is common in gardens, parks and forests.
+        <br><br> The pollen season for alder trees is from late-January to April. Usually, the pollen count peaks in March.
+        If you are allergic to birch pollen, you might also be sensitive to alder pollen.`,
+        Grass: `Grass pollens are not transported very far from the original plant. Despite this allergy to grass is one of
+        the most common and inhibiting allergies in Denmark. This is because there is grass almost all over the country,
+        in ditches, fields, parks and gardens. <br><br> There exist more than 100 different types of grass, but if you are
+        allergic to one type, most likely you are also allergic to the other.
+        The season of grass pollen starts in mid-May and lasts until start-September.`,
+        Elm: `The most common type of elm tree in Denmark is the wych elm. It grows in forests across the entire country.
+        The season for elm is from February to the start of May. <br><br>
+        Cross allergies are rare, if you suffer from allergy to elm.`,
+        Mugwort: `Mugwort (Artemisia Vulgaris) is a common weed that grows on roadsides, fallow fields and in the forest. The pollen is spread by the wind.
+        The season for mugwort normally stretches from mid-June to September. <br><br>
+        Suffering from allergy towards mugwort can also result in cross allergy. The most common foods that cause
+        similar symptoms are sunflower seeds, melon and carrots.`
+
+    }
+
+    const content = descriptions[type]
+
+
+    d3.select("#info-head").html(`${type}`)
+    d3.select("#pollen-info").html(content)
+
 
 }
