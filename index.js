@@ -443,6 +443,12 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 return isLeftSide ? "rotate(180)" : null;
             });
 
+            legend.on("mouseover", function () {
+                d3.select(this).select("text").style("font-weight", "bold");
+            }).on("mouseout", function () {
+                d3.select(this).select("text").style("font-weight", "normal");
+            });
+
         legend.on("click", function (event, d) {
             if (selectedKey === d) {
                 selectedKey = null;
