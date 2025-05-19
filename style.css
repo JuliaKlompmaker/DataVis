@@ -71,6 +71,24 @@ body {
     dominant-baseline: hanging;
 }
 
+/* Legend */
+
+.legend:hover .legend-text {
+  font-size: 14px;
+  fill: #000;
+  cursor: pointer;
+}
+
+.legend-text {
+  font-size: 12px;
+  font-weight: normal;
+  transition: font-size 0.2s ease, font-weight 0.2s ease;
+}
+
+.legend-text.selected {
+  font-weight: bold;
+}
+
 
 /* Info boxes */
 
