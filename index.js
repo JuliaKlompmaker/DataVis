@@ -279,14 +279,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 
 
 
-    /*//Constant movement
-    function randomJiggle() {
-      nodes.forEach(d => {
-          d.vx *= 0.9; // damping
-          d.vx += (Math.random() - 0.5) * 0.05;
-          d.vy = 0;
-      });
-  }*/
+
     var label = g.append("g")
         .selectAll("g")
         .data(monthGroups)
