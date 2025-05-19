@@ -41,25 +41,20 @@ d3.csv("pollenData.csv", function (d, i, columns) {
     d.total = t;
     return d;
 })
-	.then(function (data) {
+    .then(function (data) {
         addTitle()
         addPollenBox()
         addInfoBox()
 
-		//Define selected key for legend click
-		let selectedKey = null;
+        //Define selected key for legend click
+        let selectedKey = null;
 
         x.domain(
             data.map(function (d) {
                 return d.Week;
             })
         );
-        y.domain([
-            0,
-            d3.max(data, function (d) {
-                return d.total;
-            }),
-        ]);
+        y.domain([0, 300]);
         z.domain(data.columns.slice(2));
 
         let pollenTypes = data.columns.slice(2);
@@ -79,6 +74,9 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             g.selectAll(".bars-group").remove();
             const barsGroup = g.append("g").attr("class", "bars-group");
 
+            y.domain([0, 300])
+            transitionYAxisIn()
+
             barsGroup
                 .selectAll("g")
                 .data(d3.stack().keys(data.columns.slice(2))(data))
@@ -93,38 +91,38 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 .style("opacity", 0.25)
 
 
-                barsGroup
-				.selectAll("g")
-				.selectAll("path")
-				.data(function (d) {
+            barsGroup
+                .selectAll("g")
+                .selectAll("path")
+                .data(function (d) {
                     return d.map(segment => {
                         segment.key = d.key
                         return segment
                     })
                 })
-				.enter()
-				.append("path")
-				.attr("class", (d) => {
-					return `bar-${d.data.Week}`;
-				})
-				.attr(
-					"d", d3.arc()
-						.innerRadius(function (d) {
-							return y(d[0]);
-						})
-						.outerRadius(function (d) {
-							return y(d[1]);
-						})
-						.startAngle(function (d) {
-							return x(d.data.Week);
-						})
-						.endAngle(function (d) {
-							return x(d.data.Week) + x.bandwidth();
-						})
-						.padAngle(0.01)
-						.padRadius(innerRadius)
+                .enter()
+                .append("path")
+                .attr("class", (d) => {
+                    return `bar-${d.data.Week}`;
+                })
+                .attr(
+                    "d", d3.arc()
+                        .innerRadius(function (d) {
+                            return y(d[0]);
+                        })
+                        .outerRadius(function (d) {
+                            return y(d[1]);
+                        })
+                        .startAngle(function (d) {
+                            return x(d.data.Week);
+                        })
+                        .endAngle(function (d) {
+                            return x(d.data.Week) + x.bandwidth();
+                        })
+                        .padAngle(0.01)
+                        .padRadius(innerRadius)
 
-				)
+                )
                 .on("mouseover", function (event, d) {
                     const pollenType = d.key
                     const count = d.data[d.key]
@@ -138,15 +136,20 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                     d3.select("#pollen-description").html(description)
 
                 })
-}
-		function drawSingleBars(key) {
-			g.selectAll(".single-bar-group").remove();
-			const singleBarGroup = g.append("g").attr("class", "single-bar-group");
-			singleBarGroup
-				.selectAll("path")
-				.data(data)
-				.enter()
-				.append("path")
+        }
+        function drawSingleBars(key) {
+            g.selectAll(".single-bar-group").remove();
+            const singleBarGroup = g.append("g").attr("class", "single-bar-group");
+
+            y.domain([0, d3.max(data, d => d[key])])
+
+            transitionYAxisOut()
+
+            singleBarGroup
+                .selectAll("path")
+                .data(data)
+                .enter()
+                .append("path")
                 .attr("fill", z(key))
                 .attr("opacity", 0)
                 .on("mouseover", function (event, d) {
@@ -163,19 +166,19 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 })
                 .transition()
                 .duration(1000)
-				.attr("opacity", 0.25)
-				.attr(
-					"d", d3.arc()
-						.innerRadius(innerRadius)
-						.outerRadius((d) => y(d[key]))
-						.startAngle((d) => x(d.Week))
-						.endAngle((d) => x(d.Week) + x.bandwidth())
-						.padAngle(0.01)
-						.padRadius(innerRadius)
-				)
+                .attr("opacity", 0.25)
+                .attr(
+                    "d", d3.arc()
+                        .innerRadius(innerRadius)
+                        .outerRadius((d) => y(d[key]))
+                        .startAngle((d) => x(d.Week))
+                        .endAngle((d) => x(d.Week) + x.bandwidth())
+                        .padAngle(0.01)
+                        .padRadius(innerRadius)
+                )
 
 
-		}
+        }
 
         function drawDots(key = null, stacked = true) {
             g.selectAll(".dots-group").remove();
@@ -343,42 +346,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 return d.Month;
             });
 
-        var yAxis = g.append("g").attr("text-anchor", "middle");
-
-        var yTick = yAxis
-            .selectAll("g")
-            .data([0, 50, 100, 150, 200, 250, 300])
-            .enter().append("g");
-
-        yTick
-            .append("circle")
-            .attr("fill", "none")
-            .attr("stroke", "#000")
-            .attr("r", y);
-
-        yTick
-            .append("text")
-            .attr("y", function (d) {
-                return -y(d);
-            })
-            .attr("dy", "0.35em")
-            .attr("fill", "none")
-            .attr("stroke", "#fff")
-            .attr("stroke-width", 5)
-            .text(y.tickFormat(5, "s"));
-
-        yTick
-            .append("text")
-            .attr("y", function (d) {
-                return -y(d);
-            })
-            .attr("dy", "0.35em")
-            .text(y.tickFormat(5, "s"));
-
-        yAxis.append("text")
-            .attr("y", function (d) { return -outerRadius; })
-            .attr("dy", "-3em")
-            .text("Number of pollen per m3 of air");
+        createYAxis()
 
         var legend = g
             .append("g")
@@ -443,11 +411,11 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 return isLeftSide ? "rotate(180)" : null;
             });
 
-            legend.on("mouseover", function () {
-                d3.select(this).select("text").style("font-weight", "bold");
-            }).on("mouseout", function () {
-                d3.select(this).select("text").style("font-weight", "normal");
-            });
+        legend.on("mouseover", function () {
+            d3.select(this).select("text").style("font-weight", "bold");
+        }).on("mouseout", function () {
+            d3.select(this).select("text").style("font-weight", "normal");
+        });
 
         legend.on("click", function (event, d) {
             if (selectedKey === d) {
@@ -455,14 +423,14 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 transitionOut(() => {
                     drawStackedBars();
                     drawDots();
-                    transitionIn();
+                    
                 });
             } else {
                 selectedKey = d;
                 transitionOut(() => {
                     drawSingleBars(selectedKey);
                     drawDots(selectedKey, false);
-                    transitionIn();
+                    
                 });
             }
         });
@@ -517,33 +485,33 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         throw error;
     });
 
-function addTitle(){
+function addTitle() {
     d3.select("body").append("div")//.text("title here")
-    .attr("transform", `translate(20,20)`)
-    .style("position", "absolute")
-    .style("top", "0px")
-    .style("left", "40px")
-    .style("width", "600px")
-    //.style("padding", "10px")
-    .style("font-family", "sans-serif")
-    .html(`<h1>Pollen in Copenhagen</h1>`)
+        .attr("transform", `translate(20,20)`)
+        .style("position", "absolute")
+        .style("top", "0px")
+        .style("left", "40px")
+        .style("width", "600px")
+        //.style("padding", "10px")
+        .style("font-family", "sans-serif")
+        .html(`<h1>Pollen in Copenhagen</h1>`)
 }
 
-function addPollenBox(){
+function addPollenBox() {
     d3.select("#pollen-box").remove()
 
     d3.select("body")
-    .append("div")
-    .attr("id", "pollen-box")
-    .style("position", "absolute")
-    .style("top", "50px")
-    .style("right", "20px")
-    .style("width", "300px")
-    .style("padding", "10px")
-    .style("border", "1px solid #ccc")
-    .style("background-color", "#f9f9f9")
-    .style("font-family", "sans-serif")
-    .html(`<h3 style="margin-top: 0;">Pollen Info</h3>
+        .append("div")
+        .attr("id", "pollen-box")
+        .style("position", "absolute")
+        .style("top", "50px")
+        .style("right", "20px")
+        .style("width", "300px")
+        .style("padding", "10px")
+        .style("border", "1px solid #ccc")
+        .style("background-color", "#f9f9f9")
+        .style("font-family", "sans-serif")
+        .html(`<h3 style="margin-top: 0;">Pollen Info</h3>
           <p id="pollen-type">Type —</p>
           <p id="pollen-week">Week —</p>
           <p id="pollen-value">Pollen count —</p>
@@ -586,18 +554,18 @@ function getPollenDescription(color) {
 function addInfoBox() {
 
     d3.select("body")
-    .append("div")
-    .attr("id", "info-box")
-    .style("position", "absolute")
-    .style("top", "300px")
-    .style("right", "20px")
-    .style("width", "340px")
-    .style("padding", "10px")
-    .style("border", "1px solid #ccc")
-    .style("background-color", "#f9f9f9")
-    .style("font-family", "sans-serif")
-    .style("line-height", "1.5")
-    .html(`
+        .append("div")
+        .attr("id", "info-box")
+        .style("position", "absolute")
+        .style("top", "300px")
+        .style("right", "20px")
+        .style("width", "340px")
+        .style("padding", "10px")
+        .style("border", "1px solid #ccc")
+        .style("background-color", "#f9f9f9")
+        .style("font-family", "sans-serif")
+        .style("line-height", "1.5")
+        .html(`
             <h3 style="margin-top: 0; font-size: 1.2em;">About This Visualization</h3>
             <p>
                 In Latin pollen translates to fine dust. The specs of pollen are so small they are not immediately visible for the naked eye.
@@ -613,3 +581,174 @@ function addInfoBox() {
         `)
 
 }
+
+function createYAxis() {
+    d3.select(".y-axis").remove()
+
+    var yAxis = g.append("g")
+        .attr("text-anchor", "middle")
+        .attr("class", "y-axis")
+
+    var yTick = yAxis
+        .selectAll("g")
+        .data(y.ticks(6))
+        .enter().append("g").attr("class", "y-axis-tick");
+
+    yTick
+        .append("circle")
+        .attr("fill", "none")
+        .attr("stroke", "#000")
+        .attr("r", y);
+
+
+    yTick
+        .append("text")
+        .attr("y", function (d) {
+            return -y(d);
+        })
+        .attr("dy", "0.35em")
+        .attr("fill", "none")
+        .attr("stroke", "#fff")
+        .attr("stroke-width", 5)
+        .text(y.tickFormat(6, "s"));
+
+    yTick
+        .append("text")
+        .attr("y", function (d) {
+            return -y(d);
+        })
+        .attr("dy", "0.35em")
+        .text(y.tickFormat(6, "s"));
+
+    yAxis.append("text")
+        .attr("y", function (d) { return -outerRadius; })
+        .attr("dy", "-3em")
+        .text("Number of pollen per m3 of air");
+}
+
+function transitionYAxisOut() {
+    const t = d3.transition().duration(1000);
+
+    const ticks = y.ticks(6);
+
+    const yAxis = g.select(".y-axis");
+
+    // JOIN new data with old elements, using tick value as key
+    const yTick = yAxis.selectAll(".y-axis-tick")
+        .data(ticks, d => d);  // <-- key function for stability
+
+    yTick.exit().each(function (d) {
+        d3.select(this)
+            .transition(t)
+            .style("opacity", 0)
+            .select("circle")
+            .attr("r", outerRadius * 1.2); // grow outward
+
+        d3.select(this)
+            .transition(t)
+            .selectAll("text")
+            .attr("y", -outerRadius * 1.2);
+    })
+        .transition(t)
+        .on("end", function () {
+            d3.select(this).remove();
+        });
+
+    // ENTER new ticks
+    const yTickEnter = yTick.enter()
+        .append("g")
+        .attr("class", "y-axis-tick")
+        .style("opacity", 0);  // start invisible
+
+    yTickEnter.append("circle")
+        .attr("fill", "none")
+        .attr("stroke", "#000")
+        .attr("r", 0); // start from center
+
+    yTickEnter.append("text")
+        .attr("y", 0)
+        .attr("dy", "0.35em")
+        .attr("fill", "none")
+        .attr("stroke", "#fff")
+        .attr("stroke-width", 5)
+        .text(d => y.tickFormat(6, "s")(d));
+
+    yTickEnter.append("text")
+        .attr("y", 0)
+        .attr("dy", "0.35em")
+        .text(d => y.tickFormat(6, "s")(d));
+
+    // UPDATE + ENTER
+    const yTickMerge = yTickEnter.merge(yTick);
+
+    yTickMerge.transition(t)
+        .style("opacity", 1);
+
+    yTickMerge.select("circle")
+        .transition(t)
+        .attr("r", d => y(d));
+
+    yTickMerge.selectAll("text")
+        .transition(t)
+        .attr("y", d => -y(d));
+}
+
+function transitionYAxisIn() {
+    var t = d3.transition().duration(2000);
+
+    var ticks = y.ticks(6);
+    var yAxis = g.select(".y-axis");
+
+    // EXIT old ticks — shrink and fade out
+    var oldTicks = yAxis.selectAll(".y-axis-tick");
+
+    oldTicks.selectAll("circle")
+        .transition(t)
+        .attr("r", innerRadius * 0.8)
+        
+    oldTicks.selectAll("text")
+        .transition(t)
+        .attr("y", -innerRadius * 0.8)
+        
+
+    yAxis.selectAll(".y-axis-tick").remove()
+
+    // ENTER new ticks — from outerRadius to actual radius
+    const yTick = yAxis.selectAll(".y-axis-tick")
+        .data(ticks, d => d)
+        .enter()
+        .append("g")
+        .attr("class", "y-axis-tick")
+        .style("opacity", 0);  // start invisible
+
+    yTick.append("circle")
+        .attr("fill", "none")
+        .attr("stroke", "#000")
+        .attr("r", outerRadius);  // start from outerRadius
+
+    yTick.append("text")
+        .attr("y", -outerRadius)
+        .attr("dy", "0.35em")
+        .attr("fill", "none")
+        .attr("stroke", "#fff")
+        .attr("stroke-width", 5)
+        .text(y.tickFormat(6, "s"));
+
+    yTick.append("text")
+        .attr("y", -outerRadius)
+        .attr("dy", "0.35em")
+        .text(y.tickFormat(6, "s"));
+
+    // Transition new ticks to proper size and position
+    yTick.transition(t)
+        .style("opacity", 1);
+
+    yTick.select("circle")
+        .transition(t)
+        .attr("r", d => y(d));
+
+    yTick.selectAll("text")
+        .transition(t)
+        .attr("y", d => -y(d));
+}
+
