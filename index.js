@@ -450,21 +450,22 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             });
 
         legend.on("click", function (event, d) {
-            if (selectedKey === d) {
-                selectedKey = null;
-                transitionOut(() => {
-                    drawStackedBars();
-                    drawDots();
-                    transitionIn();
-                });
+            selectedKey = (selectedKey === d) ? null : d
+
+            transitionOut(() => {
+            addInfoBox()
+
+            if (selectedKey === null) {
+                drawStackedBars();
+                drawDots();
             } else {
-                selectedKey = d;
-                transitionOut(() => {
-                    drawSingleBars(selectedKey);
-                    drawDots(selectedKey, false);
-                    transitionIn();
-                });
+                drawSingleBars(selectedKey);
+                drawDots(selectedKey, false);
+                updateInfoBox(selectedKey)
             }
+
+            transitionIn();
+            });
         });
         drawStackedBars();
         drawDots();
@@ -584,6 +585,7 @@ function getPollenDescription(color) {
 }
 
 function addInfoBox() {
+    d3.select("#info-box").remove()
 
     d3.select("body")
     .append("div")
@@ -598,8 +600,8 @@ function addInfoBox() {
     .style("font-family", "sans-serif")
     .style("line-height", "1.5")
     .html(`
-            <h3 style="margin-top: 0; font-size: 1.2em;">About This Visualization</h3>
-            <p>
+            <h3 id="info-head" style="margin-top: 0; font-size: 1.2em;">About This Visualization</h3>
+            <p id="pollen-info">
                 In Latin pollen translates to fine dust. The specs of pollen are so small they are not immediately visible for the naked eye.
                 In this visualization we look at the six largest allergy-inducing pollen types: bunch, grass, birch, elm, hazel and alder.
                 <br>
@@ -611,5 +613,45 @@ function addInfoBox() {
 
             </p>
         `)
+
+}
+
+function updateInfoBox(type) {
+    const descriptions = {
+        Birch: `The birch is a common tree that resides in forests and bogs but can also be found in gardens and by 
+        the street in cities. It is the most allergy inducing type of pollen from trees that Danes with pollen 
+        allergy have a reaction to. <br><br>Birch usually has a short, but intense season from mid-April to mid-May. 
+        The pollen of birches can travel several hundred kilometers by the wind. <br><br>If you suffer from allergy to birch, 
+        you might also react to alder and hazel. If you have a cross allergy the most common foods that cause similar 
+        symptoms are apples, tomatoes and hazelnuts.`, 
+        Hazel: `Hazel is 3-5 meter tall bush from the birch-family. The pollen count for hazel is usually quite low, 
+        despite pollen production being high. This is because hazel often grows in the shadow of larger trees in the 
+        forest. This prohibits hazel pollen from spreading in the wind. <br><br> Free growing hazel in private gardens can 
+        cause very local peaks that are not reported here. <br><br> The season for hazel pollen is from January to March.`,
+        Alder: `The most common types of alder trees found in Denmark are the black alder and grey alder. 
+        The black alder is common by lake shores and streams. The grey alder is common in gardens, parks and forests. 
+        <br><br> The pollen season for alder trees is from late-January to April. Usually, the pollen count peaks in March. 
+        If you are allergic to birch pollen, you might also be sensitive to alder pollen.`,
+        Grass: `Grass pollen are not transported very far from the original plant. Despite this allergy to grass is one of 
+        the most common and inhibiting allergies in Denmark. This is because there is grass almost all over the country; 
+        in ditches, fields, parks and gardens. <br><br> There exists more than 100 different types of grass, but if you are 
+        allergic to one type, most likely you are also allergic to the other. 
+        The season of grass pollen starts in mid-May and lasts until start-September.`,
+        Elm: `The most common type of elm tree in Denmark is the wych elm. It grow in forests across the entire country. 
+        The season for elm is from February to the start of May. <br><br>
+        Cross allergies are rare, if you suffer from allergy to elm.`,
+        Mugwort: `Mugwort (Artemisia Vulgaris) is a common weed that grows on roadsides, fallow fields and in the forest. The pollen is spread by the wind. 
+        The season for mugwort normally stretches from mid-June to September. <br><br>
+        Suffering from allergy towards mugwort can also result in cross allergy. The most common foods that cause 
+        similar symptoms are sunflower seeds, melon and carrots.`
+
+    }
+
+    const content = descriptions[type]
+
+
+    d3.select("#info-head").html(`${type}`)
+    d3.select("#pollen-info").html(content)
+
 
 }
