@@ -535,11 +535,15 @@ function addInfoBox() {
     .html(`
             <h3 style="margin-top: 0; font-size: 1.2em;">About This Visualization</h3>
             <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut 
-                labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco 
-                laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in 
-                voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat 
-                non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                In Latin pollen translates to fine dust. The specs of pollen are so small they are not immediately visible for the naked eye.
+                In this visualization we look at the six largest allergy-inducing pollen types: bunch, grass, birch, elm, hazel and alder. 
+                <br>
+                <br>
+                Upwards of 1.000.000 Danes suffer from pollen allergy. The most common symptoms of pollen allergy are red and itchy eyes, stuffy nose and uncontrollable sneezing. 
+                Some people describe fever-like symptoms and general fatigue. <br><br>
+                The pollen season starts in January and ends in September. In early spring elm and hazel peaks, whereas grass makes its entrance later in the early summer months.
+                Feel free to explore the different pollen types and their ebbs and flows throughout the year by pressing on the square by the name.
+
             </p>
         `)
     
