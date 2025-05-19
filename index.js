@@ -369,6 +369,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             .data(data.columns.slice(2).reverse())
             .enter()
             .append("g")
+            .attr("class", "legend")
             .attr("transform", function (d, i) {
                 return (
                     "translate(-40," + (i - (data.columns.length - 1) / 2) * 20 + ")"
@@ -423,11 +424,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 return isLeftSide ? "rotate(180)" : null;
             });
 
-            legend.on("mouseover", function () {
-                d3.select(this).select(".legend-text").style("font-size", "14px");
-            }).on("mouseout", function () {
-                d3.select(this).select(".legend-text").style("font-size", "12px");
-            });
+
 
             legend.on("click", function (event, d) {
                 selectedKey = (selectedKey === d) ? null : d;

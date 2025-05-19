@@ -57,6 +57,13 @@
 }
 
 /* Legend */
+
+.legend:hover .legend-text {
+  font-size: 14px;
+  fill: #000;
+  cursor: pointer;
+}
+
 .legend-text {
   font-size: 12px;
   font-weight: normal;
