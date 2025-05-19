@@ -43,6 +43,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
     return d;
 }).then(function (data) {
 
+    addPollenBox()
     addInfoBox()
 
     x.domain(data.map(function (d) { return d.Week; }));
@@ -58,6 +59,10 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             return { Month: month, Week: centerWeek.Week, angle: centerAngle };
         }
     );
+
+    //const keys = Object.keys(data.columns.slice(2)) // Pollen type
+   
+
     g.append("g")
         .selectAll("g")
         .data(d3.stack().keys(data.columns.slice(2))(data))
@@ -65,7 +70,12 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         .attr("fill", function (d) { return z(d.key); })
         .style("opacity", 0.25)
         .selectAll("path")
-        .data(function (d) { return d; })
+        .data(function (d) { 
+            return d.map(segment => {
+                segment.key = d.key
+                return segment
+            })
+        })
         .enter().append("path")
         .attr("class", d => {
 
@@ -78,10 +88,15 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             .endAngle(function (d) { return x(d.data.Week) + x.bandwidth(); })
             .padAngle(0.01)
             .padRadius(innerRadius))
-        .on("mouseover", () => {
-          d3.select("#pollen-type").text(`Type - ${key}`)
-          d3.select("#pollen-week").text(`Week - ${point.week}`)
-          d3.select("#pollen-value").text(`Pollen count - ${point.value} pollen/m³`)
+        .on("mouseover", function (event, d) {
+            const pollenType = d.key
+            const count = d.data[d.key]
+            const color = checkPollenCount(pollenType, count)
+
+          d3.select("#pollen-type").text(`Type - ${pollenType}`)
+          d3.select("#pollen-week").text(`Week - ${d.data.Week}`)
+          checkPollenCount(d.key, d.data[d.key])
+          d3.select("#pollen-value").text(`Pollen count - ${count} pollen/m³`).style("color", color)
 
         })
 
@@ -122,6 +137,8 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 });
             }
         });
+
+    g.on
     });
 
 
@@ -260,15 +277,16 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 });
 
 
-function addInfoBox(){
-    d3.select("#info-box").remove()
+function addPollenBox(){
+    d3.select("#pollen-box").remove()
 
     d3.select("body")
     .append("div")
-    .attr("id", "info-box")
+    .attr("id", "pollen-box")
     .style("position", "absolute")
     .style("top", "50px")
-    .style("left", "1250px") 
+    .style("left", "1120px") 
+    .style("width", "300px")
     .style("padding", "10px")
     .style("border", "1px solid #ccc")
     .style("background-color", "#f9f9f9")
@@ -277,4 +295,47 @@ function addInfoBox(){
           <p id="pollen-type">Type —</p>
           <p id="pollen-week">Week —</p>
           <p id="pollen-value">Pollen count —</p>`)
+}
+
+function checkPollenCount(type, count) {
+    if (type === "Birch") {
+        return evaluatePollenCount(count, 100, 30);
+    } else if (type === "Hazel") {
+        return evaluatePollenCount(count, 15, 5);
+    } else {
+        return evaluatePollenCount(count, 50, 10);
+    }
+}
+
+function evaluatePollenCount(count, redThreshold, yellowThreshold) {
+    if (count >= redThreshold) return "red";
+    else if (count >= yellowThreshold) return "#FFDB58";
+    else return "green";
+}
+
+function addInfoBox() {
+
+    d3.select("body")
+    .append("div")
+    .attr("id", "info-box")
+    .style("position", "absolute")
+    .style("top", "250px") 
+    .style("left", "1100px") 
+    .style("width", "340px") 
+    .style("padding", "10px")
+    .style("border", "1px solid #ccc")
+    .style("background-color", "#f9f9f9")
+    .style("font-family", "sans-serif")
+    .style("line-height", "1.5")
+    .html(`
+            <h3 style="margin-top: 0; font-size: 1.2em;">About This Visualization</h3>
+            <p>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut 
+                labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco 
+                laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in 
+                voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat 
+                non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+        `)
+    
 }
