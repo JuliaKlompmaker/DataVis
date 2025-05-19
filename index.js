@@ -1,9 +1,9 @@
 var svg = d3.select("svg"),
     width = +svg.attr("width"),
     height = +svg.attr("height"),
-    innerRadius = 180,
-    outerRadius = Math.min(width, height) / 2.3,
-    g = svg.append("g").attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+    innerRadius = 130,
+    outerRadius = height / 3.2,
+    g = svg.append("g").attr("transform", "translate(" + width / 2.8 + "," + height / 2.3 + ")");
 
 var x = d3
     .scaleBand()
@@ -42,7 +42,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
     return d;
 })
 	.then(function (data) {
-
+        addTitle()
         addPollenBox()
         addInfoBox()
 
@@ -192,7 +192,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                         const angle = x(week) + x.bandwidth() / 2 - Math.PI / 2;
                         const inner = y(datum[0]);
                         const outer = y(datum[1]);
-                        const count = Math.floor((datum[1] - datum[0]) * 2);
+                        const count = Math.floor((datum[1] - datum[0]) * 1.5);
 
                         for (let i = 0; i < count; i++) {
                             const r = inner + Math.random() * (outer - inner);
@@ -220,7 +220,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                     const value = d[key];
                     const inner = innerRadius;
                     const outer = y(value);
-                    const count = Math.floor(value * 2);
+                    const count = Math.floor(value * 1.5);
 
                     for (let i = 0; i < count; i++) {
                         const r = inner + Math.random() * (outer - inner);
@@ -378,7 +378,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         yAxis.append("text")
             .attr("y", function (d) { return -outerRadius; })
             .attr("dy", "-3em")
-            .text("Number of pollen per m^3 of air");
+            .text("Number of pollen per m3 of air");
 
         var legend = g
             .append("g")
@@ -463,6 +463,17 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         throw error;
     });
 
+function addTitle(){
+    d3.select("body").append("div")//.text("title here")
+    .attr("transform", `translate(20,20)`)
+    .style("position", "absolute")
+    .style("top", "0px")
+    .style("left", "40px") 
+    .style("width", "600px")
+    //.style("padding", "10px")
+    .style("font-family", "sans-serif")
+    .html(`<h1>Pollen in Copenhagen</h1>`)
+}
 
 function addPollenBox(){
     d3.select("#pollen-box").remove()
