@@ -43,6 +43,8 @@ d3.csv("pollenData.csv", function (d, i, columns) {
     return d;
 }).then(function (data) {
 
+    addInfoBox()
+
     x.domain(data.map(function (d) { return d.Week; }));
     y.domain([0, d3.max(data, function (d) { return d.total; })]);
     z.domain(data.columns.slice(2));
@@ -75,7 +77,13 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             .startAngle(function (d) { return x(d.data.Week); })
             .endAngle(function (d) { return x(d.data.Week) + x.bandwidth(); })
             .padAngle(0.01)
-            .padRadius(innerRadius));
+            .padRadius(innerRadius))
+        .on("mouseover", () => {
+          d3.select("#pollen-type").text(`Type - ${key}`)
+          d3.select("#pollen-week").text(`Week - ${point.week}`)
+          d3.select("#pollen-value").text(`Pollen count - ${point.value} pollen/m³`)
+
+        })
 
 
 
@@ -250,3 +258,23 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 }).catch(function (error) {
     throw error;
 });
+
+
+function addInfoBox(){
+    d3.select("#info-box").remove()
+
+    d3.select("body")
+    .append("div")
+    .attr("id", "info-box")
+    .style("position", "absolute")
+    .style("top", "50px")
+    .style("left", "1250px") 
+    .style("padding", "10px")
+    .style("border", "1px solid #ccc")
+    .style("background-color", "#f9f9f9")
+    .style("font-family", "sans-serif")
+    .html(`<h3>Pollen Info</h3>
+          <p id="pollen-type">Type —</p>
+          <p id="pollen-week">Week —</p>
+          <p id="pollen-value">Pollen count —</p>`)
+}
