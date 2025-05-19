@@ -14,7 +14,7 @@ var y = d3.scaleRadial()
 
 var z = d3.scaleOrdinal()
     .range([
-        "#395c8d", // #395c8d 
+        "#395c8d", // #395c8d
         "#6967a8", // #6967a8
         "#714092", // #714092
         "#a14aa1", // #a14aa1
@@ -42,7 +42,9 @@ d3.csv("pollenData.csv", function (d, i, columns) {
     d.total = t;
     return d;
 }).then(function (data) {
-
+    //Define selected key for legend click
+    let selectedKey = null;
+    
     x.domain(data.map(function (d) { return d.Week; }));
     y.domain([0, d3.max(data, function (d) { return d.total; })]);
     z.domain(data.columns.slice(2));
@@ -128,7 +130,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
     //make it move constantly
     for (let i = 0; i < 100; i++) {
         simulation.tick();
-        
+
     }
 
     const swarm = g.append("g")
@@ -247,6 +249,38 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         .attr("y", 9)
         .attr("dy", "0.35em")
         .text(function (d) { return d; });
+
+        legend.on("click", function (event, key) {
+            if (selectedKey === key) {
+                // Reset view
+                selectedKey = null;
+
+                g.selectAll("g")
+                    .filter(function (d) {
+                        return d && d.key;
+                    })
+                    .style("opacity", 0.25);
+
+                g.selectAll("circle")
+                    .transition()
+                    .duration(300)
+                    .attr("opacity", 1);
+            } else {
+                selectedKey = key;
+
+                g.selectAll("g")
+                    .filter(function (d) {
+                        return d && d.key;
+                    })
+                    .style("opacity", d => d.key === key ? 0.8 : 0.05);
+
+                g.selectAll("circle")
+                    .transition()
+                    .duration(300)
+                    .attr("opacity", d => d.type === key ? 1 : 0.05);
+            }
+        });
+
 }).catch(function (error) {
     throw error;
 });
