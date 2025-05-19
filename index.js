@@ -93,10 +93,12 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             const count = d.data[d.key]
             const color = checkPollenCount(pollenType, count)
 
-          d3.select("#pollen-type").text(`Type - ${pollenType}`)
-          d3.select("#pollen-week").text(`Week - ${d.data.Week}`)
-          checkPollenCount(d.key, d.data[d.key])
-          d3.select("#pollen-value").text(`Pollen count - ${count} pollen/m³`).style("color", color)
+            d3.select("#pollen-type").text(`Type - ${pollenType}`)
+            d3.select("#pollen-week").text(`Week - ${d.data.Week}`)
+            d3.select("#pollen-value").text(`Pollen count - ${count} pollen/m³`).style("color", color)
+
+            const description = getPollenDescription(color);
+            d3.select("#pollen-description").html(description);
 
         })
 
@@ -291,10 +293,11 @@ function addPollenBox(){
     .style("border", "1px solid #ccc")
     .style("background-color", "#f9f9f9")
     .style("font-family", "sans-serif")
-    .html(`<h3>Pollen Info</h3>
+    .html(`<h3 style="margin-top: 0;">Pollen Info</h3>
           <p id="pollen-type">Type —</p>
           <p id="pollen-week">Week —</p>
-          <p id="pollen-value">Pollen count —</p>`)
+          <p id="pollen-value">Pollen count —</p>
+          <p id="pollen-description"</p>`)
 }
 
 function checkPollenCount(type, count) {
@@ -308,9 +311,26 @@ function checkPollenCount(type, count) {
 }
 
 function evaluatePollenCount(count, redThreshold, yellowThreshold) {
-    if (count >= redThreshold) return "red";
+    if (count >= redThreshold) return "#FF0000";
     else if (count >= yellowThreshold) return "#FFDB58";
-    else return "green";
+    else return "#6aa84f";
+}
+
+function getPollenDescription(color) {
+    const hexToName = {
+        "#FF0000": "red",
+        "#FFDB58": "yellow",
+        "#6aa84f": "green"
+    } 
+    
+    const messages = {
+        green: `Pollen levels are <span style="color: #6aa84f">low</span>. Minimal symptoms are expected`,
+        yellow: `Pollen levels are <span style="color: #FFDB58">moderate</span>. Some individuals may experience mild symptoms`,
+        red: `Pollen levels are <span style="color: #FF0000">high</span>. People with allergies may experience strong symptoms`
+    }
+    const name = hexToName[color]
+
+    return `${messages[name]}` 
 }
 
 function addInfoBox() {
@@ -319,7 +339,7 @@ function addInfoBox() {
     .append("div")
     .attr("id", "info-box")
     .style("position", "absolute")
-    .style("top", "250px") 
+    .style("top", "300px") 
     .style("left", "1100px") 
     .style("width", "340px") 
     .style("padding", "10px")
