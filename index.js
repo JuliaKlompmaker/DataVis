@@ -2,15 +2,17 @@ var svg = d3.select("svg"),
     width = +svg.attr("width"),
     height = +svg.attr("height"),
     innerRadius = 180,
-    outerRadius = Math.min(width, height) / 2,
+    outerRadius = Math.min(width, height) / 2.3,
     g = svg.append("g").attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
 var x = d3.scaleBand()
     .range([0, 2 * Math.PI])
     .align(0);
 
-var y = d3.scaleRadial()
-    .range([innerRadius, outerRadius]);
+var y = d3.scaleLinear()
+    .domain([0, 300])
+    .range([innerRadius, outerRadius])
+
 
 var z = d3.scaleOrdinal()
     .range([
@@ -44,7 +46,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 }).then(function (data) {
 
     x.domain(data.map(function (d) { return d.Week; }));
-    y.domain([0, d3.max(data, function (d) { return d.total; })]);
+    //y.domain([0, d3.max(data, function (d) { return d.total; })]);
     z.domain(data.columns.slice(2));
     let monthGroups = Array.from(
         d3.group(data, (d) => d.Month),
@@ -175,16 +177,6 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         }
     }
 
-
-
-    /*//Constant movement
-    function randomJiggle() {
-      nodes.forEach(d => {
-          d.vx *= 0.9; // damping
-          d.vx += (Math.random() - 0.5) * 0.05;
-          d.vy = 0;
-      });
-  }*/
     var label = g.append("g")
         .selectAll("g")
         .data(monthGroups)
@@ -205,7 +197,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 
     var yTick = yAxis
         .selectAll("g")
-        .data(y.ticks(5).slice(1))
+        .data([0, 50, 100, 150, 200, 250, 300])
         .enter().append("g");
 
     yTick.append("circle")
@@ -227,8 +219,8 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         .text(y.tickFormat(5, "s"));
 
     yAxis.append("text")
-        .attr("y", function (d) { return -y(y.ticks(5).pop()); })
-        .attr("dy", "-1em")
+        .attr("y", function (d) { return -outerRadius; })
+        .attr("dy", "-3em")
         .text("Number of pollen per m^3 of air");
 
     var legend = g.append("g")
@@ -255,14 +247,15 @@ d3.csv("pollenData.csv", function (d, i, columns) {
     const getWeek = d3.utcFormat("%V")
     const getDate = d3.utcFormat("%d/%m/%Y")
 
-
     var currentWeek = getWeek(date)
     var angle = x(currentWeek) + x.bandwidth() / 2 - Math.PI / 2
 
+    const offset = 6.5 * 10
+
     var x1 = innerRadius * Math.cos(angle)
     var y1 = innerRadius * Math.sin(angle)
-    var x2 = outerRadius * Math.cos(angle)
-    var y2 = outerRadius * Math.sin(angle)
+    var x2 = (outerRadius+offset) * Math.cos(angle)
+    var y2 = (outerRadius+offset) * Math.sin(angle)
 
     const isLeftSide = (angle > Math.PI / 2 || angle < -Math.PI / 2)
 
@@ -274,7 +267,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         .attr("stroke", "maroon")
         .style("stroke-width", 2)
 
-    
+
     const labelGroup = g.append("g")
         .attr("transform", `translate(${x2}, ${y2}) rotate(${(angle * 180 / Math.PI)})`);
 
