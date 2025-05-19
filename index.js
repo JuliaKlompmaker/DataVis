@@ -96,7 +96,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 barsGroup
 				.selectAll("g")
 				.selectAll("path")
-				.data(function (d) { 
+				.data(function (d) {
                     return d.map(segment => {
                         segment.key = d.key
                         return segment
@@ -123,7 +123,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 						})
 						.padAngle(0.01)
 						.padRadius(innerRadius)
-                        
+
 				)
                 .on("mouseover", function (event, d) {
                     const pollenType = d.key
@@ -171,10 +171,10 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 						.startAngle((d) => x(d.Week))
 						.endAngle((d) => x(d.Week) + x.bandwidth())
 						.padAngle(0.01)
-						.padRadius(innerRadius)  
+						.padRadius(innerRadius)
 				)
-                
-                
+
+
 		}
 
         function drawDots(key = null, stacked = true) {
@@ -446,18 +446,66 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         legend.on("click", function (event, d) {
             if (selectedKey === d) {
                 selectedKey = null;
-                g.selectAll(".single-bar-group").remove();
-                drawStackedBars();
-                drawDots();
+                transitionOut(() => {
+                    drawStackedBars();
+                    drawDots();
+                    transitionIn();
+                });
             } else {
                 selectedKey = d;
-                g.selectAll(".bars-group").remove();
-                drawSingleBars(selectedKey)
-                drawDots(selectedKey, false);
+                transitionOut(() => {
+                    drawSingleBars(selectedKey);
+                    drawDots(selectedKey, false);
+                    transitionIn();
+                });
             }
         });
         drawStackedBars();
         drawDots();
+
+        function transitionOut(callback) {
+            g.selectAll(".bars-group path, .single-bar-group path")
+                .transition()
+                .duration(600)
+                .attrTween("d", function (d) {
+                    // Handle stacked vs single bar
+                    let week, startA, endA;
+                    if (d.data && d[0] !== undefined && d[1] !== undefined) {
+                        // stacked
+                        week = d.data.Week;
+                    } else {
+                        // single
+                        week = d.Week;
+                    }
+
+                    startA = x(week);
+                    endA = startA + x.bandwidth();
+
+                    const arc = d3.arc()
+                        .innerRadius(innerRadius)
+                        .outerRadius(innerRadius)
+                        .startAngle(startA)
+                        .endAngle(endA)
+                        .padAngle(0.01)
+                        .padRadius(innerRadius);
+
+                    return () => arc(d);
+                })
+                .style("opacity", 0)
+                .on("end", function (_, i, nodes) {
+                    if (i === nodes.length - 1) callback(); // call once when last transition ends
+                });
+
+            g.selectAll(".dots-group circle")
+                .transition()
+                .duration(600)
+                .attr("cx", d => innerRadius * Math.cos(d.angle))
+                .attr("cy", d => innerRadius * Math.sin(d.angle))
+                .style("opacity", 0)
+                .on("end", function (_, i, nodes) {
+                    if (i === nodes.length - 1) callback(); // safeguard if dots finish last
+                });
+        }
 
     }).catch(function (error) {
         throw error;
@@ -468,7 +516,7 @@ function addTitle(){
     .attr("transform", `translate(20,20)`)
     .style("position", "absolute")
     .style("top", "0px")
-    .style("left", "40px") 
+    .style("left", "40px")
     .style("width", "600px")
     //.style("padding", "10px")
     .style("font-family", "sans-serif")
@@ -483,7 +531,7 @@ function addPollenBox(){
     .attr("id", "pollen-box")
     .style("position", "absolute")
     .style("top", "50px")
-    .style("right", "20px") 
+    .style("right", "20px")
     .style("width", "300px")
     .style("padding", "10px")
     .style("border", "1px solid #ccc")
@@ -517,8 +565,8 @@ function getPollenDescription(color) {
         "#FF0000": "red",
         "#FFDB58": "yellow",
         "#6aa84f": "green"
-    } 
-    
+    }
+
     const messages = {
         green: `Pollen levels are <span style="color: #6aa84f">low</span>. Minimal symptoms are expected`,
         yellow: `Pollen levels are <span style="color: #FFDB58">moderate</span>. Some individuals may experience mild symptoms`,
@@ -526,7 +574,7 @@ function getPollenDescription(color) {
     }
     const name = hexToName[color]
 
-    return `${messages[name]}` 
+    return `${messages[name]}`
 }
 
 function addInfoBox() {
@@ -535,9 +583,9 @@ function addInfoBox() {
     .append("div")
     .attr("id", "info-box")
     .style("position", "absolute")
-    .style("top", "300px") 
-    .style("right", "20px") 
-    .style("width", "340px") 
+    .style("top", "300px")
+    .style("right", "20px")
+    .style("width", "340px")
     .style("padding", "10px")
     .style("border", "1px solid #ccc")
     .style("background-color", "#f9f9f9")
@@ -547,15 +595,15 @@ function addInfoBox() {
             <h3 style="margin-top: 0; font-size: 1.2em;">About This Visualization</h3>
             <p>
                 In Latin pollen translates to fine dust. The specs of pollen are so small they are not immediately visible for the naked eye.
-                In this visualization we look at the six largest allergy-inducing pollen types: bunch, grass, birch, elm, hazel and alder. 
+                In this visualization we look at the six largest allergy-inducing pollen types: bunch, grass, birch, elm, hazel and alder.
                 <br>
                 <br>
-                Upwards of 1.000.000 Danes suffer from pollen allergy. The most common symptoms of pollen allergy are red and itchy eyes, stuffy nose and uncontrollable sneezing. 
+                Upwards of 1.000.000 Danes suffer from pollen allergy. The most common symptoms of pollen allergy are red and itchy eyes, stuffy nose and uncontrollable sneezing.
                 Some people describe fever-like symptoms and general fatigue. <br><br>
                 The pollen season starts in January and ends in September. In early spring elm and hazel peaks, whereas grass makes its entrance later in the early summer months.
                 Feel free to explore the different pollen types and their ebbs and flows throughout the year by pressing on the square by the name.
 
             </p>
         `)
-    
+
 }
