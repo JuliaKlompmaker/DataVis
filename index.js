@@ -429,26 +429,27 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 d3.select(this).select(".legend-text").style("font-size", "12px");
             });
 
-        legend.on("click", function (event, d) {
-            selectedKey = (selectedKey === d) ? null : d
-            legend.selectAll(".legend-text").style("font-weight", "normal");
+            legend.on("click", function (event, d) {
+                selectedKey = (selectedKey === d) ? null : d;
 
+                legend.selectAll(".legend-text").classed("selected", false);
 
-            transitionOut(() => {
-            addInfoBox()
+                transitionOut(() => {
+                    addInfoBox();
 
-            if (selectedKey === null) {
-                drawStackedBars();
-                drawDots();
-            } else {
-                d3.select(this).select(".legend-text").style("font-weight", "bold");
+                    if (selectedKey === null) {
+                        drawStackedBars();
+                        drawDots();
+                    } else {
+                        d3.select(this).select(".legend-text").classed("selected", true);
 
-                drawSingleBars(selectedKey);
-                drawDots(selectedKey, false);
-                updateInfoBox(selectedKey)
-            }
+                        drawSingleBars(selectedKey);
+                        drawDots(selectedKey, false);
+                        updateInfoBox(selectedKey);
+                    }
+                });
+            });
 
-        });
         drawStackedBars();
         drawDots();
 
