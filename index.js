@@ -15,26 +15,10 @@ var y = d3.scaleLinear()
     .range([innerRadius, outerRadius])
 
 
-var z = d3.scaleOrdinal().range([
-    "#395c8d", // #395c8d
-    "#6967a8", // #6967a8
-    "#714092", // #714092
-    "#a14aa1", // #a14aa1
-    "#a05d56", // #a05d56
-    "#d0743c", // #d0743c
-    "#ff8c00", // #ff8c00
-]);
+var z = d3.scaleOrdinal().range(["#36a620", "#cfa543", "#399283", "#20502e", "#8ba849", "#265582"]);
 
 
-var dotColor = d3.scaleOrdinal().range([
-    "#b4c3d5", // lighter of #98abc5
-    "#a3a1b6", // lighter of #8a89a6
-    "#9681a0", // lighter of #7b6888
-    "#866c83", // lighter of #6b486b
-    "#bb7871", // lighter of #a05d56
-    "#e08e5f", // lighter of #d0743c
-    "#ffa733", // lighter of #ff8c00
-]);
+var dotColor = d3.scaleOrdinal().range(["#36a620", "#cfa543", "#399283", "#20502e", "#8ba849", "#265582"]);
 d3.csv("pollenData.csv", function (d, i, columns) {
     for (i = 2, t = 0; i < columns.length; ++i)
         t += d[columns[i]] = +d[columns[i]];
@@ -398,6 +382,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             .attr("x", 24)
             .attr("y", 9)
             .attr("dy", "0.35em")
+            .attr("class", "legend-text")
             .text(function (d) { return d; });
 
 
@@ -444,27 +429,30 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             });
 
             legend.on("mouseover", function () {
-                d3.select(this).select("text").style("font-weight", "bold");
+                d3.select(this).select(".legend-text").style("font-size", "14px");
             }).on("mouseout", function () {
-                d3.select(this).select("text").style("font-weight", "normal");
+                d3.select(this).select(".legend-text").style("font-size", "12px");
             });
 
         legend.on("click", function (event, d) {
+            legend.selectAll(".legend-text").style("font-weight", "normal");
+
             if (selectedKey === d) {
                 selectedKey = null;
                 transitionOut(() => {
                     drawStackedBars();
                     drawDots();
-                    transitionIn();
                 });
+
             } else {
                 selectedKey = d;
+                d3.select(this).select(".legend-text").style("font-weight", "bold");
                 transitionOut(() => {
                     drawSingleBars(selectedKey);
                     drawDots(selectedKey, false);
-                    transitionIn();
                 });
             }
+
         });
         drawStackedBars();
         drawDots();
