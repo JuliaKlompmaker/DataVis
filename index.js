@@ -632,12 +632,12 @@ function updateInfoBox(type) {
         The black alder is common by lake shores and streams. The grey alder is common in gardens, parks and forests. 
         <br><br> The pollen season for alder trees is from late-January to April. Usually, the pollen count peaks in March. 
         If you are allergic to birch pollen, you might also be sensitive to alder pollen.`,
-        Grass: `Grass pollen are not transported very far from the original plant. Despite this allergy to grass is one of 
-        the most common and inhibiting allergies in Denmark. This is because there is grass almost all over the country; 
-        in ditches, fields, parks and gardens. <br><br> There exists more than 100 different types of grass, but if you are 
+        Grass: `Grass pollens are not transported very far from the original plant. Despite this allergy to grass is one of 
+        the most common and inhibiting allergies in Denmark. This is because there is grass almost all over the country, 
+        in ditches, fields, parks and gardens. <br><br> There exist more than 100 different types of grass, but if you are 
         allergic to one type, most likely you are also allergic to the other. 
         The season of grass pollen starts in mid-May and lasts until start-September.`,
-        Elm: `The most common type of elm tree in Denmark is the wych elm. It grow in forests across the entire country. 
+        Elm: `The most common type of elm tree in Denmark is the wych elm. It grows in forests across the entire country. 
         The season for elm is from February to the start of May. <br><br>
         Cross allergies are rare, if you suffer from allergy to elm.`,
         Mugwort: `Mugwort (Artemisia Vulgaris) is a common weed that grows on roadsides, fallow fields and in the forest. The pollen is spread by the wind. 
