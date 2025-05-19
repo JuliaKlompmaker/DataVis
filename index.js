@@ -128,7 +128,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
     //make it move constantly
     for (let i = 0; i < 100; i++) {
         simulation.tick();
-        
+
     }
 
     const swarm = g.append("g")
@@ -247,6 +247,51 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         .attr("y", 9)
         .attr("dy", "0.35em")
         .text(function (d) { return d; });
+
+
+
+    // clock arm 
+    var date = new Date()
+    const getWeek = d3.utcFormat("%V")
+    const getDate = d3.utcFormat("%d/%m/%Y")
+
+
+    var currentWeek = getWeek(date)
+    var angle = x(currentWeek) + x.bandwidth() / 2 - Math.PI / 2
+
+    var x1 = innerRadius * Math.cos(angle)
+    var y1 = innerRadius * Math.sin(angle)
+    var x2 = outerRadius * Math.cos(angle)
+    var y2 = outerRadius * Math.sin(angle)
+
+    const isLeftSide = (angle > Math.PI / 2 || angle < -Math.PI / 2)
+
+    g.append("line")
+        .attr("x1", x1)
+        .attr("y1", y1)
+        .attr("x2", x2)
+        .attr("y2", y2)
+        .attr("stroke", "maroon")
+        .style("stroke-width", 2)
+
+    
+    const labelGroup = g.append("g")
+        .attr("transform", `translate(${x2}, ${y2}) rotate(${(angle * 180 / Math.PI)})`);
+
+    labelGroup.append("text")
+        .text(getDate(date))
+        .attr("dy", "0.35em")
+        .attr("text-anchor", isLeftSide ? "start" : "end")
+        .attr("font-size", "12px")
+        .style("font-weight", "bold")
+        .attr("dominant-baseline", "hanging")
+        .attr("fill", "maroon")
+        .attr("transform", function () {
+            return isLeftSide ? "rotate(180)" : null;
+        });
+
+
+
 }).catch(function (error) {
     throw error;
 });
