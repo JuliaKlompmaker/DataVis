@@ -46,6 +46,10 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 	return d;
 })
 	.then(function (data) {
+
+        addPollenBox()
+        addInfoBox()
+
 		//Define selected key for legend click
 		let selectedKey = null;
 
@@ -73,7 +77,8 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 				);
 				return { Month: month, Week: centerWeek.Week, angle: centerAngle };
 			}
-		);
+		)
+
 		function drawStackedBars() {
 			g.selectAll(".bars-group").remove();
 			const barsGroup = g.append("g").attr("class", "bars-group");
@@ -95,18 +100,19 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 barsGroup
 				.selectAll("g")
 				.selectAll("path")
-				.data(function (d) {
-					return d;
-				})
+				.data(function (d) { 
+                    return d.map(segment => {
+                        segment.key = d.key
+                        return segment
+                    })
+                })
 				.enter()
 				.append("path")
 				.attr("class", (d) => {
 					return `bar-${d.data.Week}`;
 				})
 				.attr(
-					"d",
-					d3
-						.arc()
+					"d", d3.arc()
 						.innerRadius(function (d) {
 							return y(d[0]);
 						})
@@ -121,8 +127,22 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 						})
 						.padAngle(0.01)
 						.padRadius(innerRadius)
-				);
-		}
+                        
+				)
+                .on("mouseover", function (event, d) {
+                    const pollenType = d.key
+                    const count = d.data[d.key]
+                    const color = checkPollenCount(pollenType, count)
+
+                    d3.select("#pollen-type").text(`Type - ${pollenType}`)
+                    d3.select("#pollen-week").text(`Week - ${d.data.Week}`)
+                    d3.select("#pollen-value").text(`Pollen count - ${count} pollen/m³`).style("color", color)
+
+                    const description = getPollenDescription(color)
+                    d3.select("#pollen-description").html(description)
+
+                })
+}
 		function drawSingleBars(key) {
 			g.selectAll(".single-bar-group").remove();
 			const singleBarGroup = g.append("g").attr("class", "single-bar-group");
@@ -133,20 +153,32 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 				.append("path")
                 .attr("fill", z(key))
                 .attr("opacity", 0)
+                .on("mouseover", function (event, d) {
+                    const count = d[key]
+                    const color = checkPollenCount(key, count)
+
+                    d3.select("#pollen-type").text(`Type - ${key}`)
+                    d3.select("#pollen-week").text(`Week - ${d.Week}`)
+                    d3.select("#pollen-value").text(`Pollen count - ${count} pollen/m³`).style("color", color)
+
+                    const description = getPollenDescription(color)
+                    d3.select("#pollen-description").html(description)
+
+                })
                 .transition()
                 .duration(1000)
 				.attr("opacity", 0.25)
 				.attr(
-					"d",
-					d3
-						.arc()
+					"d", d3.arc()
 						.innerRadius(innerRadius)
 						.outerRadius((d) => y(d[key]))
 						.startAngle((d) => x(d.Week))
 						.endAngle((d) => x(d.Week) + x.bandwidth())
 						.padAngle(0.01)
-						.padRadius(innerRadius)
-				);
+						.padRadius(innerRadius)  
+				)
+                
+                
 		}
 
 		function drawDots(key = null, stacked = true) {
@@ -419,3 +451,85 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 }).catch(function (error) {
     throw error;
 });
+
+
+function addPollenBox(){
+    d3.select("#pollen-box").remove()
+
+    d3.select("body")
+    .append("div")
+    .attr("id", "pollen-box")
+    .style("position", "absolute")
+    .style("top", "50px")
+    .style("left", "1120px") 
+    .style("width", "300px")
+    .style("padding", "10px")
+    .style("border", "1px solid #ccc")
+    .style("background-color", "#f9f9f9")
+    .style("font-family", "sans-serif")
+    .html(`<h3 style="margin-top: 0;">Pollen Info</h3>
+          <p id="pollen-type">Type —</p>
+          <p id="pollen-week">Week —</p>
+          <p id="pollen-value">Pollen count —</p>
+          <p id="pollen-description"</p>`)
+}
+
+function checkPollenCount(type, count) {
+    if (type === "Birch") {
+        return evaluatePollenCount(count, 100, 30);
+    } else if (type === "Hazel") {
+        return evaluatePollenCount(count, 15, 5);
+    } else {
+        return evaluatePollenCount(count, 50, 10);
+    }
+}
+
+function evaluatePollenCount(count, redThreshold, yellowThreshold) {
+    if (count >= redThreshold) return "#FF0000";
+    else if (count >= yellowThreshold) return "#FFDB58";
+    else return "#6aa84f";
+}
+
+function getPollenDescription(color) {
+    const hexToName = {
+        "#FF0000": "red",
+        "#FFDB58": "yellow",
+        "#6aa84f": "green"
+    } 
+    
+    const messages = {
+        green: `Pollen levels are <span style="color: #6aa84f">low</span>. Minimal symptoms are expected`,
+        yellow: `Pollen levels are <span style="color: #FFDB58">moderate</span>. Some individuals may experience mild symptoms`,
+        red: `Pollen levels are <span style="color: #FF0000">high</span>. People with allergies may experience strong symptoms`
+    }
+    const name = hexToName[color]
+
+    return `${messages[name]}` 
+}
+
+function addInfoBox() {
+
+    d3.select("body")
+    .append("div")
+    .attr("id", "info-box")
+    .style("position", "absolute")
+    .style("top", "300px") 
+    .style("left", "1100px") 
+    .style("width", "340px") 
+    .style("padding", "10px")
+    .style("border", "1px solid #ccc")
+    .style("background-color", "#f9f9f9")
+    .style("font-family", "sans-serif")
+    .style("line-height", "1.5")
+    .html(`
+            <h3 style="margin-top: 0; font-size: 1.2em;">About This Visualization</h3>
+            <p>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut 
+                labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco 
+                laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in 
+                voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat 
+                non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+        `)
+    
+}
