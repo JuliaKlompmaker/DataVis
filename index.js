@@ -403,6 +403,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 addInfoBox();
 
                 if (selectedKey === null) {
+                    updateInfoBox("Generel");
                     drawStackedBars();
                     drawDots();
                 } else {
@@ -542,45 +543,7 @@ function addInfoBox() {
 
 }
 
-function updateInfoBox(type) {
-    const descriptions = {
-        Birch: `The birch is a common tree that resides in forests and bogs but can also be found in gardens and by
-        the street in cities. It is the most allergy inducing type of pollen from trees that Danes with pollen
-        allergy have a reaction to. <br><br>Birch usually has a short, but intense season from mid-April to mid-May.
-        The pollen of birches can travel several hundred kilometers by the wind. <br><br>If you suffer from allergy to birch,
-        you might also react to alder and hazel. If you have a cross allergy the most common foods that cause similar
-        symptoms are apples, tomatoes and hazelnuts.`,
-        Hazel: `Hazel is 3-5 meter tall bush from the birch-family. The pollen count for hazel is usually quite low,
-        despite pollen production being high. This is because hazel often grows in the shadow of larger trees in the
-        forest. This prohibits hazel pollen from spreading in the wind. <br><br> Free growing hazel in private gardens can
-        cause very local peaks that are not reported here. <br><br> The season for hazel pollen is from January to March.`,
-        Alder: `The most common types of alder trees found in Denmark are the black alder and grey alder.
-        The black alder is common by lake shores and streams. The grey alder is common in gardens, parks and forests.
-        <br><br> The pollen season for alder trees is from late-January to April. Usually, the pollen count peaks in March.
-        If you are allergic to birch pollen, you might also be sensitive to alder pollen.`,
-        Grass: `Grass pollens are not transported very far from the original plant. Despite this allergy to grass is one of
-        the most common and inhibiting allergies in Denmark. This is because there is grass almost all over the country,
-        in ditches, fields, parks and gardens. <br><br> There exist more than 100 different types of grass, but if you are
-        allergic to one type, most likely you are also allergic to the other.
-        The season of grass pollen starts in mid-May and lasts until start-September.`,
-        Elm: `The most common type of elm tree in Denmark is the wych elm. It grows in forests across the entire country.
-        The season for elm is from February to the start of May. <br><br>
-        Cross allergies are rare, if you suffer from allergy to elm.`,
-        Mugwort: `Mugwort (Artemisia Vulgaris) is a common weed that grows on roadsides, fallow fields and in the forest. The pollen is spread by the wind.
-        The season for mugwort normally stretches from mid-June to September. <br><br>
-        Suffering from allergy towards mugwort can also result in cross allergy. The most common foods that cause
-        similar symptoms are sunflower seeds, melon and carrots.`
 
-    }
-
-    const content = descriptions[type]
-
-
-    d3.select("#info-head").html(`${type}`)
-    d3.select("#pollen-info").html(content)
-
-
-}
 
 function updateInfoBox(type) {
     const descriptions = {
@@ -609,15 +572,61 @@ function updateInfoBox(type) {
         Mugwort: `Mugwort (Artemisia Vulgaris) is a common weed that grows on roadsides, fallow fields and in the forest. The pollen is spread by the wind.
         The season for mugwort normally stretches from mid-June to September. <br><br>
         Suffering from allergy towards mugwort can also result in cross allergy. The most common foods that cause
-        similar symptoms are sunflower seeds, melon and carrots.`
+        similar symptoms are sunflower seeds, melon and carrots.`,
+        Generel: `In Latin pollen translates to fine dust. The specs of pollen are so small they are not immediately visible for the naked eye.
+        In this visualization we look at the six largest allergy-inducing pollen types: bunch, grass, birch, elm, hazel and alder.<br><br>
+        Upwards of 1.000.000 Danes suffer from pollen allergy. The most common symptoms of pollen allergy are red and itchy eyes, stuffy nose and uncontrollable sneezing.
+        Some people describe fever-like symptoms and general fatigue. <br><br>
+        The pollen season starts in January and ends in September. In early spring elm and hazel peaks, whereas grass makes its entrance later in the early summer months.
+        Feel free to explore the different pollen types and their ebbs and flows throughout the year by pressing on the square by the name.`
 
     }
 
-    const content = descriptions[type]
+    const content = descriptions[type];
+    const infoBox = d3.select("#pollen-info");
 
+    d3.select("#info-head").html(`${type}`);
+    
+    // Clear content first
+    infoBox.html("");
 
-    d3.select("#info-head").html(`${type}`)
-    d3.select("#pollen-info").html(content)
+    // Create a dummy <div> to parse HTML tags properly
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = content;
+    const nodes = Array.from(tempDiv.childNodes);
+
+    let i = 0;
+
+    function typeNextNode() {
+        if (i < nodes.length) {
+            const node = nodes[i];
+            if (node.nodeType === Node.TEXT_NODE) {
+                // Type out text character by character
+                let text = node.textContent;
+                let span = document.createElement("span");
+                infoBox.node().appendChild(span);
+                let j = 0;
+
+                function typeChar() {
+                    if (j < text.length) {
+                        span.textContent += text[j++];
+                        setTimeout(typeChar, 2); // adjust speed
+                    } else {
+                        i++;
+                        typeNextNode();
+                    }
+                }
+                typeChar();
+            } else {
+                // For elements like <br>, <b>, etc., append instantly
+                infoBox.node().appendChild(node.cloneNode(true));
+                i++;
+                setTimeout(typeNextNode, 10); // short delay between nodes
+            }
+        }
+    }
+
+    typeNextNode();
 
 
 }
