@@ -498,7 +498,7 @@ function addTitle() {
 		.append("div")
 		.attr("class", "title")
 		.attr("transform", `translate(20,20)`)
-		.html(`<h1>Pollen in Copenhagen</h1>`);
+		.html(`<h1>The invisible season of pollen</h1>`);
 }
 
 const pollenBackgrounds = {
@@ -732,7 +732,7 @@ function createYAxis() {
 			return -outerRadius;
 		})
 		.attr("dy", "-3em")
-		.text("Number of pollen per m3 of air");
+		.text("Pollen particles per cubic meter of air");
 }
 
 function transitionYAxisOut() {
