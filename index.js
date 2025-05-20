@@ -121,7 +121,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                     const description = getPollenDescription(color)
                     d3.select("#pollen-description").html(description)
 
-                    //showPollenBackground(pollenType)
+                    showPollenBackground(pollenType)
 
                 })
 }
@@ -524,14 +524,26 @@ function addBackgroundContainer() {
         
 }
 
+let currentImage = null
+
 function showPollenBackground(type) {
-    const imageUrl = pollenBackgrounds[type];
-    if (!imageUrl) return;
+    const imageUrl = pollenBackgrounds[type]
+
+    if (currentImage === imageUrl) return
+
+    currentImage = imageUrl
 
     d3.select("#pollen-background")
-        .style("background-image", `url(${imageUrl})`)
-        .style("opacity", 0.3) 
-        .style("transition", "opacity 0.4s ease-in-out");
+        .transition()
+        .duration(200)
+        .style("opacity", 0)
+        .on("end", () => {
+            d3.select("#pollen-background")
+                .style("background-image", `url(${imageUrl})`)
+                .transition()
+                .duration(400)
+                .style("opacity", 0.3)
+        })
 }
 
 function hidePollenBackground(){
