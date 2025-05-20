@@ -700,21 +700,19 @@ function transitionYAxisOut() {
         .style("opacity", 0);  // start invisible
 
     yTickEnter.append("circle")
-        .attr("fill", "none")
-        .attr("stroke", "#000")
+        .attr("class", "y-tick-circle")
         .attr("r", 0); // start from center
 
     yTickEnter.append("text")
         .attr("y", 0)
         .attr("dy", "0.35em")
-        .attr("fill", "none")
-        .attr("stroke", "#fff")
-        .attr("stroke-width", 5)
+        .attr("class", "y-tick-text-bg")
         .text(d => y.tickFormat(6, "s")(d));
 
     yTickEnter.append("text")
         .attr("y", 0)
         .attr("dy", "0.35em")
+        .attr("class", "y-tick-text")
         .text(d => y.tickFormat(6, "s")(d));
 
     // UPDATE + ENTER
@@ -756,21 +754,19 @@ function transitionYAxisIn() {
         .style("opacity", 0);  // start invisible
 
     yTickEnter.append("circle")
-        .attr("fill", "none")
-        .attr("stroke", "#000")
+        .attr("class", "y-tick-circle")
         .attr("r", outerRadius);  // start from outerRadius
 
     yTickEnter.append("text")
         .attr("y", -outerRadius)
         .attr("dy", "0.35em")
-        .attr("fill", "none")
-        .attr("stroke", "#fff")
-        .attr("stroke-width", 5)
+        .attr("class", "y-tick-text-bg")
         .text(y.tickFormat(6, "s"));
 
     yTickEnter.append("text")
         .attr("y", -outerRadius)
         .attr("dy", "0.35em")
+        .attr("class", "y-tick-text")
         .text(y.tickFormat(6, "s"));
 
     // MERGE — for update + enter selection
