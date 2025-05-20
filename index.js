@@ -18,7 +18,7 @@ var y = d3.scaleLinear()
 var z = d3.scaleOrdinal().range(["#36a620", "#cfa543", "#399283", "#20502e", "#8ba849", "#265582"]);
 
 
-d3.csv("pollenData.csv", function (d, i, columns) {
+d3.csv("Pollendata.csv", function (d, i, columns) {
     for (i = 2, t = 0; i < columns.length; ++i)
         t += d[columns[i]] = +d[columns[i]];
     d.total = t;
@@ -493,7 +493,7 @@ function addBackgroundContainer() {
     d3.select("body")
         .append("div")
         .attr("id", "pollen-background")
-        
+
 }
 
 let currentImage = null
@@ -636,8 +636,8 @@ function updateInfoBox(type) {
     const content = descriptions[type];
     const infoBox = d3.select("#pollen-info");
 
-   
-    
+
+
     // Clear content first
     infoBox.html("");
 
