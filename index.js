@@ -406,7 +406,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 addInfoBox();
 
                 if (selectedKey === null) {
-                    updateInfoBox("Generel");
+                    updateInfoBox("About");
                     drawStackedBars();
                     drawDots()
                     hidePollenBackground()
@@ -578,7 +578,7 @@ function addInfoBox() {
         .append("div")
         .attr("id", "info-box")
         .html(`
-            <h3 id="info-head" style="margin-top: 0; font-size: 1.2em;">About This Visualization</h3>
+            <h3 id="info-head" style="margin-top: 0; font-size: 1.2em;">About Pollen</h3>
             <p id="pollen-info">
                 In Latin pollen translates to fine dust. The specs of pollen are so small they are not immediately visible for the naked eye.
                 In this visualization we look at the six largest allergy-inducing pollen types: bunch, grass, birch, elm, hazel and alder.
@@ -624,7 +624,7 @@ function updateInfoBox(type) {
         The season for mugwort normally stretches from mid-June to September. <br><br>
         Suffering from allergy towards mugwort can also result in cross allergy. The most common foods that cause
         similar symptoms are sunflower seeds, melon and carrots.`,
-        Generel: `In Latin pollen translates to fine dust. The specs of pollen are so small they are not immediately visible for the naked eye.
+        About: `In Latin pollen translates to fine dust. The specs of pollen are so small they are not immediately visible for the naked eye.
         In this visualization we look at the six largest allergy-inducing pollen types: bunch, grass, birch, elm, hazel and alder.<br><br>
         Upwards of 1.000.000 Danes suffer from pollen allergy. The most common symptoms of pollen allergy are red and itchy eyes, stuffy nose and uncontrollable sneezing.
         Some people describe fever-like symptoms and general fatigue. <br><br>
@@ -636,7 +636,7 @@ function updateInfoBox(type) {
     const content = descriptions[type];
     const infoBox = d3.select("#pollen-info");
 
-    d3.select("#info-head").html(`${type}`);
+   
     
     // Clear content first
     infoBox.html("");
@@ -678,6 +678,12 @@ function updateInfoBox(type) {
     }
 
     typeNextNode();
+
+    if (type === "About") {
+        return
+    } else {
+         d3.select("#info-head").html(`${type}`);
+    }
 
 
 }
