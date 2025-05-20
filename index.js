@@ -481,12 +481,12 @@ function addTitle() {
 
 
 const pollenBackgrounds = {
-    Birch: "./images/birch.png",
-    Hazel: "images/hazel.png",
-    Alder: "images/alder.png",
-    Grass: "images/grass.png",
-    Elm: "images/elm.png",
-    Mugwort: "images/mugwort.png"
+    Birch: "./images/birch.jpg",
+    Hazel: "images/hazel.jpg",
+    Alder: "images/alder.jpg",
+    Grass: "images/grass.jpg",
+    Elm: "images/elm.jpg",
+    Mugwort: "images/mugwort.jpg"
 }
 
 function addBackgroundContainer() {
