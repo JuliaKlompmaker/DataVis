@@ -125,3 +125,17 @@ body {
 #pollen-description {
   margin: 0.2em 0;
 }
+
+/* Picture */
+
+#pollen-background {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 400px;
+  height: 100%;
+  z-index: -1;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+}

@@ -28,6 +28,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         addTitle()
         addPollenBox()
         addInfoBox()
+        addBackgroundContainer()
 
         //Define selected key for legend click
         let selectedKey = null;
@@ -117,6 +118,8 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 
                     const description = getPollenDescription(color)
                     d3.select("#pollen-description").html(description)
+
+                    showPollenBackground(pollenType)
 
                 })
         }
@@ -405,12 +408,14 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 if (selectedKey === null) {
                     updateInfoBox("Generel");
                     drawStackedBars();
-                    drawDots();
+                    drawDots()
+                    hidePollenBackground()
                 } else {
                     d3.select(this).select(".legend-text").classed("selected", true);
 
                     drawSingleBars(selectedKey);
                     drawDots(selectedKey, false);
+                    showPollenBackground(selectedKey)
                     updateInfoBox(selectedKey);
                 }
             });
@@ -474,6 +479,50 @@ function addTitle() {
         .html(`<h1>Pollen in Copenhagen</h1>`)
 }
 
+
+const pollenBackgrounds = {
+    Birch: "./images/birch.png",
+    Hazel: "images/hazel.png",
+    Alder: "images/alder.png",
+    Grass: "images/grass.png",
+    Elm: "images/elm.png",
+    Mugwort: "images/mugwort.png"
+}
+
+function addBackgroundContainer() {
+    d3.select("body")
+        .append("div")
+        .attr("id", "pollen-background")
+        
+}
+
+let currentImage = null
+
+function showPollenBackground(type) {
+    const imageUrl = pollenBackgrounds[type]
+
+    if (currentImage === imageUrl) return
+
+    currentImage = imageUrl
+
+    d3.select("#pollen-background")
+        .transition()
+        .duration(200)
+        .style("opacity", 0)
+        .on("end", () => {
+            d3.select("#pollen-background")
+                .style("background-image", `url(${imageUrl})`)
+                .transition()
+                .duration(400)
+                .style("opacity", 0.3)
+        })
+}
+
+function hidePollenBackground(){
+    d3.select("#pollen-background").style("opacity", 0);
+}
+
+
 function addPollenBox() {
     d3.select("#pollen-box").remove()
 
@@ -519,6 +568,8 @@ function getPollenDescription(color) {
 
     return `${messages[name]}`
 }
+
+
 
 function addInfoBox() {
     d3.select("#info-box").remove()
