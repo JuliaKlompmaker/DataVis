@@ -24,25 +24,20 @@ d3.csv("pollenData.csv", function (d, i, columns) {
     d.total = t;
     return d;
 })
-	.then(function (data) {
+    .then(function (data) {
         addTitle()
         addPollenBox()
         addInfoBox()
 
-		//Define selected key for legend click
-		let selectedKey = null;
+        //Define selected key for legend click
+        let selectedKey = null;
 
         x.domain(
             data.map(function (d) {
                 return d.Week;
             })
         );
-        y.domain([
-            0,
-            d3.max(data, function (d) {
-                return d.total;
-            }),
-        ]);
+        y.domain([0, 300]);
         z.domain(data.columns.slice(2));
 
         let pollenTypes = data.columns.slice(2);
@@ -62,6 +57,9 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             g.selectAll(".bars-group").remove();
             const barsGroup = g.append("g").attr("class", "bars-group");
 
+            y.domain([0, 300])
+            transitionYAxisIn()
+
             barsGroup
                 .selectAll("g")
                 .data(d3.stack().keys(data.columns.slice(2))(data))
@@ -76,38 +74,38 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 .style("opacity", 0.25)
 
 
-                barsGroup
-				.selectAll("g")
-				.selectAll("path")
-				.data(function (d) {
+            barsGroup
+                .selectAll("g")
+                .selectAll("path")
+                .data(function (d) {
                     return d.map(segment => {
                         segment.key = d.key
                         return segment
                     })
                 })
-				.enter()
-				.append("path")
-				.attr("class", (d) => {
-					return `bar-${d.data.Week}`;
-				})
-				.attr(
-					"d", d3.arc()
-						.innerRadius(function (d) {
-							return y(d[0]);
-						})
-						.outerRadius(function (d) {
-							return y(d[1]);
-						})
-						.startAngle(function (d) {
-							return x(d.data.Week);
-						})
-						.endAngle(function (d) {
-							return x(d.data.Week) + x.bandwidth();
-						})
-						.padAngle(0.01)
-						.padRadius(innerRadius)
+                .enter()
+                .append("path")
+                .attr("class", (d) => {
+                    return `bar-${d.data.Week}`;
+                })
+                .attr(
+                    "d", d3.arc()
+                        .innerRadius(function (d) {
+                            return y(d[0]);
+                        })
+                        .outerRadius(function (d) {
+                            return y(d[1]);
+                        })
+                        .startAngle(function (d) {
+                            return x(d.data.Week);
+                        })
+                        .endAngle(function (d) {
+                            return x(d.data.Week) + x.bandwidth();
+                        })
+                        .padAngle(0.01)
+                        .padRadius(innerRadius)
 
-				)
+                )
                 .on("mouseover", function (event, d) {
                     const pollenType = d.key
                     const count = d.data[d.key]
@@ -121,15 +119,20 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                     d3.select("#pollen-description").html(description)
 
                 })
-}
-		function drawSingleBars(key) {
-			g.selectAll(".single-bar-group").remove();
-			const singleBarGroup = g.append("g").attr("class", "single-bar-group");
-			singleBarGroup
-				.selectAll("path")
-				.data(data)
-				.enter()
-				.append("path")
+        }
+        function drawSingleBars(key) {
+            g.selectAll(".single-bar-group").remove();
+            const singleBarGroup = g.append("g").attr("class", "single-bar-group");
+
+            y.domain([0, d3.max(data, d => d[key])])
+
+            transitionYAxisOut()
+
+            singleBarGroup
+                .selectAll("path")
+                .data(data)
+                .enter()
+                .append("path")
                 .attr("fill", z(key))
                 .attr("opacity", 0)
                 .on("mouseover", function (event, d) {
@@ -146,19 +149,19 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 })
                 .transition()
                 .duration(1000)
-				.attr("opacity", 0.25)
-				.attr(
-					"d", d3.arc()
-						.innerRadius(innerRadius)
-						.outerRadius((d) => y(d[key]))
-						.startAngle((d) => x(d.Week))
-						.endAngle((d) => x(d.Week) + x.bandwidth())
-						.padAngle(0.01)
-						.padRadius(innerRadius)
-				)
+                .attr("opacity", 0.25)
+                .attr(
+                    "d", d3.arc()
+                        .innerRadius(innerRadius)
+                        .outerRadius((d) => y(d[key]))
+                        .startAngle((d) => x(d.Week))
+                        .endAngle((d) => x(d.Week) + x.bandwidth())
+                        .padAngle(0.01)
+                        .padRadius(innerRadius)
+                )
 
 
-		}
+        }
 
         function drawDots(key = null, stacked = true) {
             g.selectAll(".dots-group").remove();
@@ -326,41 +329,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 return d.Month;
             });
 
-        var yAxis = g.append("g").attr("text-anchor", "middle");
-
-        var yTick = yAxis
-            .selectAll("g")
-            .data([0, 50, 100, 150, 200, 250, 300])
-            .enter().append("g");
-
-        yTick
-            .append("circle")
-            .attr("class", "y-tick-circle")
-            .attr("r", y);
-
-        yTick
-            .append("text")
-            .attr("class", "y-tick-text-bg")
-            .attr("y", function (d) {
-                return -y(d);
-            })
-            .attr("dy", "0.35em")
-            .text(y.tickFormat(5, "s"));
-
-        yTick
-            .append("text")
-            .attr("class", "y-tick-text")
-            .attr("y", function (d) {
-                return -y(d);
-            })
-            .attr("dy", "0.35em")
-            .text(y.tickFormat(5, "s"));
-
-        yAxis.append("text")
-            .attr("class", "y-axis-title")
-            .attr("y", function (d) { return -outerRadius; })
-            .attr("dy", "-3em")
-            .text("Number of pollen per m3 of air");
+        createYAxis()
 
         var legend = g
             .append("g")
@@ -425,26 +394,26 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 
 
 
-            legend.on("click", function (event, d) {
-                selectedKey = (selectedKey === d) ? null : d;
+        legend.on("click", function (event, d) {
+            selectedKey = (selectedKey === d) ? null : d;
 
-                legend.selectAll(".legend-text").classed("selected", false);
+            legend.selectAll(".legend-text").classed("selected", false);
 
-                transitionOut(() => {
-                    addInfoBox();
+            transitionOut(() => {
+                addInfoBox();
 
-                    if (selectedKey === null) {
-                        drawStackedBars();
-                        drawDots();
-                    } else {
-                        d3.select(this).select(".legend-text").classed("selected", true);
+                if (selectedKey === null) {
+                    drawStackedBars();
+                    drawDots();
+                } else {
+                    d3.select(this).select(".legend-text").classed("selected", true);
 
-                        drawSingleBars(selectedKey);
-                        drawDots(selectedKey, false);
-                        updateInfoBox(selectedKey);
-                    }
-                });
+                    drawSingleBars(selectedKey);
+                    drawDots(selectedKey, false);
+                    updateInfoBox(selectedKey);
+                }
             });
+        });
 
         drawStackedBars();
         drawDots();
@@ -497,20 +466,20 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         throw error;
     });
 
-function addTitle(){
+function addTitle() {
     d3.select("body").append("div")
-    .attr("class", "title")
-    .attr("transform", `translate(20,20)`)
-    .html(`<h1>Pollen in Copenhagen</h1>`)
+        .attr("class", "title")
+        .attr("transform", `translate(20,20)`)
+        .html(`<h1>Pollen in Copenhagen</h1>`)
 }
 
-function addPollenBox(){
+function addPollenBox() {
     d3.select("#pollen-box").remove()
 
     d3.select("body")
-    .append("div")
-    .attr("id", "pollen-box")
-    .html(`<h3 style="margin-top: 0;">Pollen Info</h3>
+        .append("div")
+        .attr("id", "pollen-box")
+        .html(`<h3 style="margin-top: 0;">Pollen Info</h3>
           <p id="pollen-type">Type —</p>
           <p id="pollen-week">Week —</p>
           <p id="pollen-value">Pollen count —</p>
@@ -554,9 +523,9 @@ function addInfoBox() {
     d3.select("#info-box").remove()
 
     d3.select("body")
-    .append("div")
-    .attr("id", "info-box")
-    .html(`
+        .append("div")
+        .attr("id", "info-box")
+        .html(`
             <h3 id="info-head" style="margin-top: 0; font-size: 1.2em;">About This Visualization</h3>
             <p id="pollen-info">
                 In Latin pollen translates to fine dust. The specs of pollen are so small they are not immediately visible for the naked eye.
@@ -612,3 +581,211 @@ function updateInfoBox(type) {
 
 
 }
+
+function updateInfoBox(type) {
+    const descriptions = {
+        Birch: `The birch is a common tree that resides in forests and bogs but can also be found in gardens and by
+        the street in cities. It is the most allergy inducing type of pollen from trees that Danes with pollen
+        allergy have a reaction to. <br><br>Birch usually has a short, but intense season from mid-April to mid-May.
+        The pollen of birches can travel several hundred kilometers by the wind. <br><br>If you suffer from allergy to birch,
+        you might also react to alder and hazel. If you have a cross allergy the most common foods that cause similar
+        symptoms are apples, tomatoes and hazelnuts.`,
+        Hazel: `Hazel is 3-5 meter tall bush from the birch-family. The pollen count for hazel is usually quite low,
+        despite pollen production being high. This is because hazel often grows in the shadow of larger trees in the
+        forest. This prohibits hazel pollen from spreading in the wind. <br><br> Free growing hazel in private gardens can
+        cause very local peaks that are not reported here. <br><br> The season for hazel pollen is from January to March.`,
+        Alder: `The most common types of alder trees found in Denmark are the black alder and grey alder.
+        The black alder is common by lake shores and streams. The grey alder is common in gardens, parks and forests.
+        <br><br> The pollen season for alder trees is from late-January to April. Usually, the pollen count peaks in March.
+        If you are allergic to birch pollen, you might also be sensitive to alder pollen.`,
+        Grass: `Grass pollens are not transported very far from the original plant. Despite this allergy to grass is one of
+        the most common and inhibiting allergies in Denmark. This is because there is grass almost all over the country,
+        in ditches, fields, parks and gardens. <br><br> There exist more than 100 different types of grass, but if you are
+        allergic to one type, most likely you are also allergic to the other.
+        The season of grass pollen starts in mid-May and lasts until start-September.`,
+        Elm: `The most common type of elm tree in Denmark is the wych elm. It grows in forests across the entire country.
+        The season for elm is from February to the start of May. <br><br>
+        Cross allergies are rare, if you suffer from allergy to elm.`,
+        Mugwort: `Mugwort (Artemisia Vulgaris) is a common weed that grows on roadsides, fallow fields and in the forest. The pollen is spread by the wind.
+        The season for mugwort normally stretches from mid-June to September. <br><br>
+        Suffering from allergy towards mugwort can also result in cross allergy. The most common foods that cause
+        similar symptoms are sunflower seeds, melon and carrots.`
+
+    }
+
+    const content = descriptions[type]
+
+
+    d3.select("#info-head").html(`${type}`)
+    d3.select("#pollen-info").html(content)
+
+
+}
+
+function createYAxis() {
+    d3.select(".y-axis").remove()
+
+    var yAxis = g.append("g")
+        .attr("text-anchor", "middle")
+        .attr("class", "y-axis")
+
+    var yTick = yAxis
+        .selectAll("g")
+        .data(y.ticks(6))
+        .enter().append("g").attr("class", "y-axis-tick");
+
+    yTick
+        .append("circle")
+        .attr("class", "y-tick-circle")
+        .attr("r", y);
+
+    yTick
+        .append("text")
+        .attr("class", "y-tick-text-bg")
+        .attr("y", function (d) {
+            return -y(d);
+        })
+        .attr("dy", "0.35em")
+        .text(y.tickFormat(6, "s"));
+
+    yTick
+        .append("text")
+        .attr("class", "y-tick-text")
+        .attr("y", function (d) {
+            return -y(d);
+        })
+        .attr("dy", "0.35em")
+        .text(y.tickFormat(6, "s"));
+
+    yAxis.append("text")
+        .attr("class", "y-axis-title")
+        .attr("y", function (d) { return -outerRadius; })
+        .attr("dy", "-3em")
+        .text("Number of pollen per m3 of air");
+
+}
+
+function transitionYAxisOut() {
+    const t = d3.transition().duration(1000);
+
+    const ticks = y.ticks(6);
+
+    const yAxis = g.select(".y-axis");
+
+    // JOIN new data with old elements, using tick value as key
+    const yTick = yAxis.selectAll(".y-axis-tick")
+        .data(ticks, d => d);  // <-- key function for stability
+
+    yTick.exit().each(function (d) {
+        d3.select(this)
+            .transition(t)
+            .style("opacity", 0)
+            .select("circle")
+            .attr("r", outerRadius * 1.2); // grow outward
+
+        d3.select(this)
+            .transition(t)
+            .selectAll("text")
+            .attr("y", -outerRadius * 1.2);
+    })
+        .transition(t)
+        .on("end", function () {
+            d3.select(this).remove();
+        });
+
+    // ENTER new ticks
+    const yTickEnter = yTick.enter()
+        .append("g")
+        .attr("class", "y-axis-tick")
+        .style("opacity", 0);  // start invisible
+
+    yTickEnter.append("circle")
+        .attr("fill", "none")
+        .attr("stroke", "#000")
+        .attr("r", 0); // start from center
+
+    yTickEnter.append("text")
+        .attr("y", 0)
+        .attr("dy", "0.35em")
+        .attr("fill", "none")
+        .attr("stroke", "#fff")
+        .attr("stroke-width", 5)
+        .text(d => y.tickFormat(6, "s")(d));
+
+    yTickEnter.append("text")
+        .attr("y", 0)
+        .attr("dy", "0.35em")
+        .text(d => y.tickFormat(6, "s")(d));
+
+    // UPDATE + ENTER
+    const yTickMerge = yTickEnter.merge(yTick);
+
+    yTickMerge.transition(t)
+        .style("opacity", 1);
+
+    yTickMerge.select("circle")
+        .transition(t)
+        .attr("r", d => y(d));
+
+    yTickMerge.selectAll("text")
+        .transition(t)
+        .attr("y", d => -y(d));
+}
+
+
+function transitionYAxisIn() {
+    var t = d3.transition().duration(1000);
+
+    var ticks = y.ticks(6);
+    var yAxis = g.select(".y-axis");
+
+    // DATA JOIN — bind ticks to group elements
+    var tickJoin = yAxis.selectAll(".y-axis-tick")
+        .data(ticks, d => d);
+
+    // EXIT — old tick groups
+    tickJoin.exit()
+        .transition(t)
+        .style("opacity", 0)
+        .remove();
+
+    // ENTER — new tick groups
+    var yTickEnter = tickJoin.enter()
+        .append("g")
+        .attr("class", "y-axis-tick")
+        .style("opacity", 0);  // start invisible
+
+    yTickEnter.append("circle")
+        .attr("fill", "none")
+        .attr("stroke", "#000")
+        .attr("r", outerRadius);  // start from outerRadius
+
+    yTickEnter.append("text")
+        .attr("y", -outerRadius)
+        .attr("dy", "0.35em")
+        .attr("fill", "none")
+        .attr("stroke", "#fff")
+        .attr("stroke-width", 5)
+        .text(y.tickFormat(6, "s"));
+
+    yTickEnter.append("text")
+        .attr("y", -outerRadius)
+        .attr("dy", "0.35em")
+        .text(y.tickFormat(6, "s"));
+
+    // MERGE — for update + enter selection
+    var yTickMerge = yTickEnter.merge(tickJoin);
+
+    yTickMerge.transition(t)
+        .style("opacity", 1);
+
+    yTickMerge.select("circle")
+        .transition(t)
+        .attr("r", d => y(d));
+
+    yTickMerge.selectAll("text")
+        .transition(t)
+        .attr("y", d => -y(d));
+}
+
+
