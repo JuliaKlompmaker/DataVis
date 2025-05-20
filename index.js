@@ -693,40 +693,35 @@ function transitionYAxisOut() {
         .attr("y", d => -y(d));
 }
 
+
 function transitionYAxisIn() {
-    var t = d3.transition().duration(2000);
+    var t = d3.transition().duration(1000);
 
     var ticks = y.ticks(6);
     var yAxis = g.select(".y-axis");
 
-    // EXIT old ticks — shrink and fade out
-    var oldTicks = yAxis.selectAll(".y-axis-tick");
+    // DATA JOIN — bind ticks to group elements
+    var tickJoin = yAxis.selectAll(".y-axis-tick")
+        .data(ticks, d => d);
 
-    oldTicks.selectAll("circle")
+    // EXIT — old tick groups
+    tickJoin.exit()
         .transition(t)
-        .attr("r", innerRadius * 0.8)
-        
-    oldTicks.selectAll("text")
-        .transition(t)
-        .attr("y", -innerRadius * 0.8)
-        
+        .style("opacity", 0)
+        .remove();
 
-    yAxis.selectAll(".y-axis-tick").remove()
-
-    // ENTER new ticks — from outerRadius to actual radius
-    const yTick = yAxis.selectAll(".y-axis-tick")
-        .data(ticks, d => d)
-        .enter()
+    // ENTER — new tick groups
+    var yTickEnter = tickJoin.enter()
         .append("g")
         .attr("class", "y-axis-tick")
         .style("opacity", 0);  // start invisible
 
-    yTick.append("circle")
+    yTickEnter.append("circle")
         .attr("fill", "none")
         .attr("stroke", "#000")
         .attr("r", outerRadius);  // start from outerRadius
 
-    yTick.append("text")
+    yTickEnter.append("text")
         .attr("y", -outerRadius)
         .attr("dy", "0.35em")
         .attr("fill", "none")
@@ -734,21 +729,24 @@ function transitionYAxisIn() {
         .attr("stroke-width", 5)
         .text(y.tickFormat(6, "s"));
 
-    yTick.append("text")
+    yTickEnter.append("text")
         .attr("y", -outerRadius)
         .attr("dy", "0.35em")
         .text(y.tickFormat(6, "s"));
 
-    // Transition new ticks to proper size and position
-    yTick.transition(t)
+    // MERGE — for update + enter selection
+    var yTickMerge = yTickEnter.merge(tickJoin);
+
+    yTickMerge.transition(t)
         .style("opacity", 1);
 
-    yTick.select("circle")
+    yTickMerge.select("circle")
         .transition(t)
         .attr("r", d => y(d));
 
-    yTick.selectAll("text")
+    yTickMerge.selectAll("text")
         .transition(t)
         .attr("y", d => -y(d));
 }
+
 
