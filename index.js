@@ -26,7 +26,7 @@ var z = d3
     .scaleOrdinal()
     .range(["#36a620", "#cfa543", "#399283", "#20502e", "#8ba849", "#265582"]);
 
-// read data 
+// read data
 d3.csv("pollenData.csv", function (d, i, columns) {
     // get total for each week
     for (i = 2, t = 0; i < columns.length; ++i)
@@ -60,7 +60,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
     createYAxis();
 
     // legend
-    createLegend(data);
+    var legend = createLegend(data);
 
     // clock arm
     drawClockArm()
@@ -104,7 +104,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
 
 /**
  * drawStackedBars() removes and re-draws stacked bars in the radial chart for all pollen types
- * @param {Array} data 
+ * @param {Array} data
  */
 function drawStackedBars(data) {
     g.selectAll(".bars-group").remove();
@@ -168,8 +168,8 @@ function drawStackedBars(data) {
 
 /**
  * drawSingleBars() removes and re-draws bars in the radial chart for a single selected pollen type
- * @param {string} key is the selected pollen type 
- * @param {Array} data 
+ * @param {string} key is the selected pollen type
+ * @param {Array} data
  */
 function drawSingleBars(key, data) {
     g.selectAll(".single-bar-group").remove();
@@ -218,16 +218,16 @@ function drawSingleBars(key, data) {
 
 /**
  * drawDots() removes and re-simulates pollen particles on top of the bar chart
- * @param {string} key 
- * @param {boolean} stacked 
- * @param {Array} data 
+ * @param {string} key
+ * @param {boolean} stacked
+ * @param {Array} data
  */
 function drawDots(key = null, stacked = true, data) {
     g.selectAll(".dots-group").remove();
     let pollenTypes = data.columns.slice(2);
     let nodes = [];
 
-    if (stacked) { // make dot nodes for stacked bar chart 
+    if (stacked) { // make dot nodes for stacked bar chart
         processStackedDots(key, nodes, data, pollenTypes);
     } else { // make dot nodes for single bar chart
         data.forEach((d) => {
@@ -265,7 +265,7 @@ function drawDots(key = null, stacked = true, data) {
         .force("y", d3.forceY((d) => d.radius * Math.sin(d.angle)).strength(0.1))
         .force("constrain", () => forceRadialBarConstraint(nodes));
 
-    // run simulation before we draw dots    
+    // run simulation before we draw dots
     for (let i = 0; i < 100; i++) {
         simulation.tick();
     }
@@ -291,12 +291,12 @@ function drawDots(key = null, stacked = true, data) {
 }
 
 /**
- * processStackedDots() is a helper function for drawDots(). 
+ * processStackedDots() is a helper function for drawDots().
  * It generates dot nodes for a stacked bar chart
- * @param {string} key 
- * @param {Array} nodes 
- * @param {Array} data 
- * @param {Array} pollenTypes 
+ * @param {string} key
+ * @param {Array} nodes
+ * @param {Array} data
+ * @param {Array} pollenTypes
  */
 function processStackedDots(key, nodes, data, pollenTypes) {
     let keysToUse = key ? [key] : pollenTypes;
@@ -332,9 +332,9 @@ function processStackedDots(key, nodes, data, pollenTypes) {
 }
 
 /**
- * forceRadialBarConstraint() is a helper function for d3.forceSimulation, to constrain dots inside bars. 
- * @param {Array} nodes 
- * 
+ * forceRadialBarConstraint() is a helper function for d3.forceSimulation, to constrain dots inside bars.
+ * @param {Array} nodes
+ *
  * Source: ChatGPT
  */
 function forceRadialBarConstraint(nodes) {
@@ -433,8 +433,8 @@ function drawClockArm() {
 
 /**
  * transitionOut() handles transition animation for bar charts, when changing filter selection
- * @param {function} callback 
- * 
+ * @param {function} callback
+ *
  * Source: ChatGPT
  */
 function transitionOut(callback) {
@@ -515,8 +515,8 @@ let currentImage = null;
 
 /**
  * showPollenBackground() sets image to background container
- * @param {string} type 
- * 
+ * @param {string} type
+ *
  */
 function showPollenBackground(type) {
     const imageUrl = pollenBackgrounds[type];
@@ -561,8 +561,8 @@ function addPollenBox() {
 
 /**
  * checkPollenCount() returns green, yellow or red based on severity level of pollen count
- * @param {string} type 
- * @param {int} count  
+ * @param {string} type
+ * @param {int} count
  * @returns {string} color
  */
 function checkPollenCount(type, count) {
@@ -577,9 +577,9 @@ function checkPollenCount(type, count) {
 
 /**
  * evaluatePollenCount() returns color based on pollen count and color thresholds
- * @param {int} count 
- * @param {int} redThreshold 
- * @param {int} yellowThreshold 
+ * @param {int} count
+ * @param {int} redThreshold
+ * @param {int} yellowThreshold
  * @returns {string} color
  */
 function evaluatePollenCount(count, redThreshold, yellowThreshold) {
@@ -590,7 +590,7 @@ function evaluatePollenCount(count, redThreshold, yellowThreshold) {
 
 /**
  * getPollenDescription() returns final pollen info description for severity level based on pollen count and color
- * @param {string} color 
+ * @param {string} color
  * @returns {string} description
  */
 function getPollenDescription(color) {
@@ -634,7 +634,7 @@ function addInfoBox() {
 
 /**
  * updateInfoBox returns pollen type specific information for description box
- * @param {string} type 
+ * @param {string} type
  * @returns {string} description
  */
 function updateInfoBox(type) {
@@ -726,8 +726,8 @@ function updateInfoBox(type) {
 }
 
 /**
- * createXAxis() labels x-axis with months 
- * @param {Array} data 
+ * createXAxis() labels x-axis with months
+ * @param {Array} data
  */
 function createXAxis(data) {
     let monthGroups = Array.from(
@@ -823,7 +823,7 @@ function createYAxis() {
 
 /**
  * createLegend sets up legend for pollen types
- * @param {Array} data 
+ * @param {Array} data
  */
 function createLegend(data) {
     var legendItems = data.columns.slice(2).reverse().concat("All");
@@ -862,13 +862,14 @@ function createLegend(data) {
         .text(function (d) {
             return d;
         });
+    return legend;
 }
 
 /**
- * In \texttt{transitionYAxisOut()} the ticks fade out 
- * while the circles expand outwards before they are removed. 
+ * In \texttt{transitionYAxisOut()} the ticks fade out
+ * while the circles expand outwards before they are removed.
  * The new cirles then emerge form center, giving the impression of zooming out.
- * 
+ *
  * Adapted from ChatGPT
  */
 function transitionYAxisOut() {
@@ -940,10 +941,10 @@ function transitionYAxisOut() {
 }
 
 /**
- * the \texttt{transitionYAxisIn()} creates a zoom in effect 
- * where the old circles fade out 
+ * the \texttt{transitionYAxisIn()} creates a zoom in effect
+ * where the old circles fade out
  * and new circles appear from the outer edge and shrink inward to their correct radius
- * 
+ *
  * Adapted from ChatGPT
  */
 function transitionYAxisIn() {
