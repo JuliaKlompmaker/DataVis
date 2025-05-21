@@ -747,6 +747,11 @@ function createYAxis() {
         .text("Pollen particles per cubic meter of air");
 }
 
+/**
+ * In \texttt{transitionYAxisOut()} the ticks fade out 
+ * while the circles expand outwards before they are removed. 
+ * The new cirles then emerge form center, giving the impression of zooming out.
+ */
 function transitionYAxisOut() {
     const t = d3.transition().duration(1000);
 
@@ -815,6 +820,11 @@ function transitionYAxisOut() {
         .attr("y", (d) => -y(d));
 }
 
+/**
+ * the \texttt{transitionYAxisIn()} creates a zoom in effect 
+ * where the old circles fade out 
+ * and new circles appear from the outer edge and shrink inward to their correct radius
+ */
 function transitionYAxisIn() {
     var t = d3.transition().duration(1000);
 
