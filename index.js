@@ -1,3 +1,8 @@
+/**
+ * Source for initial radial stacked bar chart: https://gist.github.com/mbostock/6fead6d1378d6df5ae77bb6a719afcb2
+ */
+
+// setup global variables
 var svg = d3.select("svg"),
     width = +svg.attr("width"),
     height = +svg.attr("height"),
@@ -7,165 +12,100 @@ var svg = d3.select("svg"),
         .append("g")
         .attr("transform", "translate(" + width / 2.8 + "," + height / 2.3 + ")");
 
+// x-axis scale
 var x = d3
     .scaleBand()
     .range([0, 2 * Math.PI])
     .align(0);
 
-var y = d3.scaleLinear().domain([0, 300]).range([innerRadius, outerRadius]);
+// y-axis scale
+var y = d3.scaleLinear().range([innerRadius, outerRadius]);
 
+// color scale for pollen types
 var z = d3
     .scaleOrdinal()
     .range(["#36a620", "#cfa543", "#399283", "#20502e", "#8ba849", "#265582"]);
 
+// read data 
 d3.csv("pollenData.csv", function (d, i, columns) {
+    // get total for each week
     for (i = 2, t = 0; i < columns.length; ++i)
         t += d[columns[i]] = +d[columns[i]];
     d.total = t;
     return d;
-})
-    .then(function (data) {
-        addTitle();
-        addPollenBox();
-        addInfoBox();
-        addBackgroundContainer();
-        
+}).then(function (data) {
+    // setup text boxes and background image
+    addTitle();
+    addPollenBox();
+    addInfoBox();
+    addBackgroundContainer();
 
-        //Define selected key for legend click
-        let selectedKey = null;
 
-        x.domain(
-            data.map(function (d) {
-                return d.Week;
-            })
-        );
-        y.domain([0, 300]);
-        z.domain(data.columns.slice(2));
+    //Define selected key for legend click
+    let selectedKey = null;
 
-       
+    //Define domains to scales
+    x.domain(
+        data.map(function (d) {
+            return d.Week;
+        })
+    );
+    y.domain([0, 300]);
+    z.domain(data.columns.slice(2));
 
-        let monthGroups = Array.from(
-            d3.group(data, (d) => d.Month),
-            ([month, weeks]) => {
-                let centerWeek = weeks[Math.floor(weeks.length / 2)];
-                let centerAngle = d3.mean(
-                    weeks.map((w) => x(w.Week) + x.bandwidth() / 2)
-                );
-                return { Month: month, Week: centerWeek.Week, angle: centerAngle };
+    // initialise x axis
+    createXAxis(data);
+
+    // initialise y axis
+    createYAxis();
+
+    // legend
+    createLegend(data);
+
+    // clock arm
+    drawClockArm()
+
+    // initial stacked bars chart with dots
+    drawStackedBars(data);
+    drawDots(null, true, data);
+
+    // interaction for legend
+    legend.on("click", function (event, d) {
+        selectedKey = selectedKey === d ? null : d;
+
+        legend.selectAll(".legend-text").classed("selected", false);
+
+        transitionOut(() => {
+            addInfoBox();
+
+            if (selectedKey === null || selectedKey == "All") {
+                d3.select(".legend-all").classed("hidden", true);
+                updateInfoBox("About");
+                drawStackedBars(data);
+                drawDots(null, true, data);
+                hidePollenBackground();
+            } else {
+                d3.select(".legend-all").classed("hidden", false);
+
+                d3.select(this).select(".legend-text").classed("selected", true);
+                drawSingleBars(selectedKey, data);
+                drawDots(selectedKey, false, data);
+                showPollenBackground(selectedKey);
+                updateInfoBox(selectedKey);
+
+                d3.select(".legend-group").append
             }
-        );
-
-        var label = g
-            .append("g")
-            .selectAll("g")
-            .data(monthGroups)
-            .enter()
-            .append("g")
-            .attr("text-anchor", "middle")
-            .attr("transform", function (d) {
-                return (
-                    "rotate(" +
-                    (((x(d.Week) + x.bandwidth() / 2) * 180) / Math.PI - 90) +
-                    ")translate(" +
-                    innerRadius +
-                    ",0)"
-                );
-            });
-
-        label.append("line").attr("class", "label-line").attr("x2", -5);
-
-        label
-            .append("text")
-            .attr("class", "label-text")
-            .attr("transform", function (d) {
-                return (d.angle + Math.PI / 2) % (2 * Math.PI) < Math.PI
-                    ? "rotate(90)translate(0,16)"
-                    : "rotate(-90)translate(0,-9)";
-            })
-            .text(function (d) {
-                return d.Month;
-            });
-
-        createYAxis();
-
-
-        var legendItems = data.columns.slice(2).reverse().concat("All");
-
-        var legend = g
-            .append("g")
-            .selectAll("g")
-            .data(legendItems)
-            .enter()
-            .append("g")
-            .attr("class", function (d) {
-                return d === "All" ? "legend legend-all hidden" : "legend";
-            })
-            .attr("transform", function (d, i) {
-                return "translate(-40," + (i - (legendItems.length - 1) / 2) * 20 + ")";
-            });
-
-        // Rectangles
-        legend.append("rect")
-            .attr("width", 18)
-            .attr("height", 18)
-            
-            .attr("fill", function (d) {
-                return d === "All" ? "transparent" : z(d);
-            })
-            .attr("stroke", function (d) {
-                return d === "All" ? "black" : "none";
-            });
-
-        // Labels
-        legend.append("text")
-            .attr("x", 24)
-            .attr("y", 9)
-            .attr("dy", "0.35em")
-            .attr("class", "legend-text")
-            .text(function (d) {
-                return d;
-            });
-
-        // clock arm
-        drawClockArm()
-        
-
-        legend.on("click", function (event, d) {
-            selectedKey = selectedKey === d ? null : d;
-
-            legend.selectAll(".legend-text").classed("selected", false);
-
-            transitionOut(() => {
-                addInfoBox();
-
-                if (selectedKey === null || selectedKey == "All") {
-                    d3.select(".legend-all").classed("hidden", true);
-                    updateInfoBox("About");
-                    drawStackedBars(data);
-                    drawDots(null, true, data);
-                    hidePollenBackground();
-                } else {
-                    d3.select(".legend-all").classed("hidden", false);
-                    
-                    d3.select(this).select(".legend-text").classed("selected", true);
-                    drawSingleBars(selectedKey, data);
-                    drawDots(selectedKey, false, data);
-                    showPollenBackground(selectedKey);
-                    updateInfoBox(selectedKey);
-
-                    d3.select(".legend-group").append
-                }
-            });
-            
-            
         });
 
-        drawStackedBars(data);
-        drawDots(null, true, data);
 
-    })
-    
+    });
 
+})
+
+/**
+ * drawStackedBars() removes and re-draws stacked bars in the radial chart for all pollen types
+ * @param {Array} data 
+ */
 function drawStackedBars(data) {
     g.selectAll(".bars-group").remove();
     const barsGroup = g.append("g").attr("class", "bars-group");
@@ -201,12 +141,12 @@ function drawStackedBars(data) {
             return `bar-${d.data.Week}`;
         })
         .attr("d", d3.arc()
-                    .innerRadius(function (d) { return y(d[0]) })
-                    .outerRadius(function (d) { return y(d[1]) })
-                    .startAngle(function (d) { return x(d.data.Week) })
-                    .endAngle(function (d) { return x(d.data.Week) + x.bandwidth() })
-                    .padAngle(0.01)
-                    .padRadius(innerRadius)
+            .innerRadius(function (d) { return y(d[0]) })
+            .outerRadius(function (d) { return y(d[1]) })
+            .startAngle(function (d) { return x(d.data.Week) })
+            .endAngle(function (d) { return x(d.data.Week) + x.bandwidth() })
+            .padAngle(0.01)
+            .padRadius(innerRadius)
         )
         .on("mouseover", function (event, d) {
             const pollenType = d.key;
@@ -226,6 +166,11 @@ function drawStackedBars(data) {
         });
 }
 
+/**
+ * drawSingleBars() removes and re-draws bars in the radial chart for a single selected pollen type
+ * @param {string} key is the selected pollen type 
+ * @param {Array} data 
+ */
 function drawSingleBars(key, data) {
     g.selectAll(".single-bar-group").remove();
     const singleBarGroup = g.append("g").attr("class", "single-bar-group");
@@ -270,14 +215,21 @@ function drawSingleBars(key, data) {
         );
 }
 
+
+/**
+ * drawDots() removes and re-simulates pollen particles on top of the bar chart
+ * @param {string} key 
+ * @param {boolean} stacked 
+ * @param {Array} data 
+ */
 function drawDots(key = null, stacked = true, data) {
     g.selectAll(".dots-group").remove();
     let pollenTypes = data.columns.slice(2);
     let nodes = [];
 
-    if (stacked) {
+    if (stacked) { // make dot nodes for stacked bar chart 
         processStackedDots(key, nodes, data, pollenTypes);
-    } else {
+    } else { // make dot nodes for single bar chart
         data.forEach((d) => {
             const week = d.Week;
             const angle = x(week) + x.bandwidth() / 2 - Math.PI / 2;
@@ -313,10 +265,12 @@ function drawDots(key = null, stacked = true, data) {
         .force("y", d3.forceY((d) => d.radius * Math.sin(d.angle)).strength(0.1))
         .force("constrain", () => forceRadialBarConstraint(nodes));
 
+    // run simulation before we draw dots    
     for (let i = 0; i < 100; i++) {
         simulation.tick();
     }
 
+    // ensure dots are constrained inside the bars
     forceRadialBarConstraint(nodes);
 
     // Draw dots
@@ -336,6 +290,14 @@ function drawDots(key = null, stacked = true, data) {
         .style("opacity", 1);
 }
 
+/**
+ * processStackedDots() is a helper function for drawDots(). 
+ * It generates dot nodes for a stacked bar chart
+ * @param {string} key 
+ * @param {Array} nodes 
+ * @param {Array} data 
+ * @param {Array} pollenTypes 
+ */
 function processStackedDots(key, nodes, data, pollenTypes) {
     let keysToUse = key ? [key] : pollenTypes;
     const stackedData = d3.stack().keys(keysToUse)(data);
@@ -369,6 +331,12 @@ function processStackedDots(key, nodes, data, pollenTypes) {
     });
 }
 
+/**
+ * forceRadialBarConstraint() is a helper function for d3.forceSimulation, to constrain dots inside bars. 
+ * @param {Array} nodes 
+ * 
+ * Source: ChatGPT
+ */
 function forceRadialBarConstraint(nodes) {
     for (let i = 0; i < nodes.length; i++) {
         const d = nodes[i];
@@ -418,48 +386,57 @@ function forceRadialBarConstraint(nodes) {
     }
 }
 
+/**
+ * drawClockArm() appends the line and date for the clock arm
+ */
 function drawClockArm() {
     var date = new Date();
-        const getWeek = d3.utcFormat("%V");
-        const getDate = d3.utcFormat("%d/%m/%Y");
+    const getWeek = d3.utcFormat("%V");
+    const getDate = d3.utcFormat("%d/%m/%Y");
 
-        var currentWeek = getWeek(date);
-        var angle = x(currentWeek) + x.bandwidth() / 2 - Math.PI / 2;
+    var currentWeek = getWeek(date);
+    var angle = x(currentWeek) + x.bandwidth() / 2 - Math.PI / 2;
 
-        const offset = 6.5 * 12; // char size * 12 chars
+    const offset = 6.5 * 12; // char size * 12 chars
 
-        var x1 = innerRadius * Math.cos(angle);
-        var y1 = innerRadius * Math.sin(angle);
-        var x2 = (outerRadius + offset) * Math.cos(angle);
-        var y2 = (outerRadius + offset) * Math.sin(angle);
+    var x1 = innerRadius * Math.cos(angle);
+    var y1 = innerRadius * Math.sin(angle);
+    var x2 = (outerRadius + offset) * Math.cos(angle);
+    var y2 = (outerRadius + offset) * Math.sin(angle);
 
-        const isLeftSide = angle > Math.PI / 2 || angle < -Math.PI / 2;
+    const isLeftSide = angle > Math.PI / 2 || angle < -Math.PI / 2;
 
-        g.append("line")
-            .attr("class", "clock-arm")
-            .attr("x1", x1)
-            .attr("y1", y1)
-            .attr("x2", x2)
-            .attr("y2", y2);
+    g.append("line")
+        .attr("class", "clock-arm")
+        .attr("x1", x1)
+        .attr("y1", y1)
+        .attr("x2", x2)
+        .attr("y2", y2);
 
-        const labelGroup = g
-            .append("g")
-            .attr(
-                "transform",
-                `translate(${x2}, ${y2}) rotate(${(angle * 180) / Math.PI})`
-            );
+    const labelGroup = g
+        .append("g")
+        .attr(
+            "transform",
+            `translate(${x2}, ${y2}) rotate(${(angle * 180) / Math.PI})`
+        );
 
-        labelGroup
-            .append("text")
-            .attr("class", "clock-text")
-            .text(getDate(date))
-            .attr("dy", "0.35em")
-            .attr("text-anchor", isLeftSide ? "start" : "end")
-            .attr("transform", function () {
-                return isLeftSide ? "rotate(180)" : null;
-            });
+    labelGroup
+        .append("text")
+        .attr("class", "clock-text")
+        .text(getDate(date))
+        .attr("dy", "0.35em")
+        .attr("text-anchor", isLeftSide ? "start" : "end")
+        .attr("transform", function () {
+            return isLeftSide ? "rotate(180)" : null;
+        });
 }
 
+/**
+ * transitionOut() handles transition animation for bar charts, when changing filter selection
+ * @param {function} callback 
+ * 
+ * Source: ChatGPT
+ */
 function transitionOut(callback) {
     g.selectAll(".bars-group path, .single-bar-group path")
         .transition()
@@ -505,6 +482,9 @@ function transitionOut(callback) {
         });
 }
 
+/**
+ * addTitle() adds a div containing title
+ */
 function addTitle() {
     d3.select("body")
         .append("div")
@@ -513,8 +493,9 @@ function addTitle() {
         .html(`<h1>The invisible season of pollen</h1>`);
 }
 
+// image paths
 const pollenBackgrounds = {
-    Birch: "./images/birch.jpg",
+    Birch: "images/birch.jpg",
     Hazel: "images/hazel.jpg",
     Alder: "images/alder.jpg",
     Grass: "images/grass.jpg",
@@ -522,12 +503,21 @@ const pollenBackgrounds = {
     Mugwort: "images/mugwort.jpg",
 };
 
+/**
+ * addBackgroundContainer() adds div to hold background image
+ */
 function addBackgroundContainer() {
     d3.select("body").append("div").attr("id", "pollen-background");
 }
 
+// initial image path
 let currentImage = null;
 
+/**
+ * showPollenBackground() sets image to background container
+ * @param {string} type 
+ * 
+ */
 function showPollenBackground(type) {
     const imageUrl = pollenBackgrounds[type];
 
@@ -548,10 +538,16 @@ function showPollenBackground(type) {
         });
 }
 
+/**
+ * hidePollenBackground() hides background image
+ */
 function hidePollenBackground() {
     d3.select("#pollen-background").style("opacity", 0);
 }
 
+/**
+ * addPollenBox() adds div to hold pollen info box
+ */
 function addPollenBox() {
     d3.select("#pollen-box").remove();
 
@@ -563,6 +559,12 @@ function addPollenBox() {
           <p id="pollen-description"</p>`);
 }
 
+/**
+ * checkPollenCount() returns green, yellow or red based on severity level of pollen count
+ * @param {string} type 
+ * @param {int} count  
+ * @returns {string} color
+ */
 function checkPollenCount(type, count) {
     if (type === "Birch") {
         return evaluatePollenCount(count, 100, 30);
@@ -573,12 +575,24 @@ function checkPollenCount(type, count) {
     }
 }
 
+/**
+ * evaluatePollenCount() returns color based on pollen count and color thresholds
+ * @param {int} count 
+ * @param {int} redThreshold 
+ * @param {int} yellowThreshold 
+ * @returns {string} color
+ */
 function evaluatePollenCount(count, redThreshold, yellowThreshold) {
     if (count >= redThreshold) return "#FF0000";
     else if (count >= yellowThreshold) return "#FFDB58";
     else return "#6aa84f";
 }
 
+/**
+ * getPollenDescription() returns final pollen info description for severity level based on pollen count and color
+ * @param {string} color 
+ * @returns {string} description
+ */
 function getPollenDescription(color) {
     const hexToName = {
         "#FF0000": "red",
@@ -596,6 +610,9 @@ function getPollenDescription(color) {
     return `${messages[name]}`;
 }
 
+/**
+ * addInfoBox() appends div containing general description of pollen
+ */
 function addInfoBox() {
     d3.select("#info-box").remove();
 
@@ -615,6 +632,11 @@ function addInfoBox() {
         `);
 }
 
+/**
+ * updateInfoBox returns pollen type specific information for description box
+ * @param {string} type 
+ * @returns {string} description
+ */
 function updateInfoBox(type) {
     const descriptions = {
         Birch: `The birch is a common tree that resides in forests and bogs but can also be found in gardens and by
@@ -654,6 +676,7 @@ function updateInfoBox(type) {
     const content = descriptions[type];
     const infoBox = d3.select("#pollen-info");
 
+    // source for live typing animation: ChatGPT
     // Clear content first
     infoBox.html("");
 
@@ -702,6 +725,57 @@ function updateInfoBox(type) {
     }
 }
 
+/**
+ * createXAxis() labels x-axis with months 
+ * @param {Array} data 
+ */
+function createXAxis(data) {
+    let monthGroups = Array.from(
+        d3.group(data, (d) => d.Month),
+        ([month, weeks]) => {
+            let centerWeek = weeks[Math.floor(weeks.length / 2)];
+            let centerAngle = d3.mean(
+                weeks.map((w) => x(w.Week) + x.bandwidth() / 2)
+            );
+            return { Month: month, Week: centerWeek.Week, angle: centerAngle };
+        }
+    );
+
+    var label = g
+        .append("g")
+        .selectAll("g")
+        .data(monthGroups)
+        .enter()
+        .append("g")
+        .attr("text-anchor", "middle")
+        .attr("transform", function (d) {
+            return (
+                "rotate(" +
+                (((x(d.Week) + x.bandwidth() / 2) * 180) / Math.PI - 90) +
+                ")translate(" +
+                innerRadius +
+                ",0)"
+            );
+        });
+
+    label.append("line").attr("class", "label-line").attr("x2", -5);
+
+    label
+        .append("text")
+        .attr("class", "label-text")
+        .attr("transform", function (d) {
+            return (d.angle + Math.PI / 2) % (2 * Math.PI) < Math.PI
+                ? "rotate(90)translate(0,16)"
+                : "rotate(-90)translate(0,-9)";
+        })
+        .text(function (d) {
+            return d.Month;
+        });
+}
+
+/**
+ * createYAxis() sets up y-axis ticks
+ */
 function createYAxis() {
     d3.select(".y-axis").remove();
 
@@ -748,9 +822,54 @@ function createYAxis() {
 }
 
 /**
+ * createLegend sets up legend for pollen types
+ * @param {Array} data 
+ */
+function createLegend(data) {
+    var legendItems = data.columns.slice(2).reverse().concat("All");
+
+    var legend = g
+        .append("g")
+        .selectAll("g")
+        .data(legendItems)
+        .enter()
+        .append("g")
+        .attr("class", function (d) {
+            return d === "All" ? "legend legend-all hidden" : "legend";
+        })
+        .attr("transform", function (d, i) {
+            return "translate(-40," + (i - (legendItems.length - 1) / 2) * 20 + ")";
+        });
+
+    // Rectangles
+    legend.append("rect")
+        .attr("width", 18)
+        .attr("height", 18)
+
+        .attr("fill", function (d) {
+            return d === "All" ? "transparent" : z(d);
+        })
+        .attr("stroke", function (d) {
+            return d === "All" ? "black" : "none";
+        });
+
+    // Labels
+    legend.append("text")
+        .attr("x", 24)
+        .attr("y", 9)
+        .attr("dy", "0.35em")
+        .attr("class", "legend-text")
+        .text(function (d) {
+            return d;
+        });
+}
+
+/**
  * In \texttt{transitionYAxisOut()} the ticks fade out 
  * while the circles expand outwards before they are removed. 
  * The new cirles then emerge form center, giving the impression of zooming out.
+ * 
+ * Adapted from ChatGPT
  */
 function transitionYAxisOut() {
     const t = d3.transition().duration(1000);
@@ -824,6 +943,8 @@ function transitionYAxisOut() {
  * the \texttt{transitionYAxisIn()} creates a zoom in effect 
  * where the old circles fade out 
  * and new circles appear from the outer edge and shrink inward to their correct radius
+ * 
+ * Adapted from ChatGPT
  */
 function transitionYAxisIn() {
     var t = d3.transition().duration(1000);
