@@ -90,6 +90,11 @@ body {
   font-weight: bold;
 }
 
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
 
 /* Info boxes */
 
@@ -155,3 +160,4 @@ body {
   box-sizing: border-box;
 
 }
+
