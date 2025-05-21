@@ -29,6 +29,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         addPollenBox();
         addInfoBox();
         addBackgroundContainer();
+        
 
         //Define selected key for legend click
         let selectedKey = null;
@@ -41,7 +42,7 @@ d3.csv("pollenData.csv", function (d, i, columns) {
         y.domain([0, 300]);
         z.domain(data.columns.slice(2));
 
-        let pollenTypes = data.columns.slice(2);
+       
 
         let monthGroups = Array.from(
             d3.group(data, (d) => d.Month),
@@ -53,270 +54,6 @@ d3.csv("pollenData.csv", function (d, i, columns) {
                 return { Month: month, Week: centerWeek.Week, angle: centerAngle };
             }
         );
-
-        function drawStackedBars() {
-            g.selectAll(".bars-group").remove();
-            const barsGroup = g.append("g").attr("class", "bars-group");
-
-            y.domain([0, 300]);
-            transitionYAxisIn();
-
-            barsGroup
-                .selectAll("g")
-                .data(d3.stack().keys(data.columns.slice(2))(data))
-                .enter()
-                .append("g")
-                .attr("fill", function (d) {
-                    return z(d.key);
-                })
-                .style("opacity", 0)
-                .transition()
-                .duration(2000)
-                .style("opacity", 0.25);
-
-            barsGroup
-                .selectAll("g")
-                .selectAll("path")
-                .data(function (d) {
-                    return d.map((segment) => {
-                        segment.key = d.key;
-                        return segment;
-                    });
-                })
-                .enter()
-                .append("path")
-                .attr("class", (d) => {
-                    return `bar-${d.data.Week}`;
-                })
-                .attr(
-                    "d",
-                    d3
-                        .arc()
-                        .innerRadius(function (d) {
-                            return y(d[0]);
-                        })
-                        .outerRadius(function (d) {
-                            return y(d[1]);
-                        })
-                        .startAngle(function (d) {
-                            return x(d.data.Week);
-                        })
-                        .endAngle(function (d) {
-                            return x(d.data.Week) + x.bandwidth();
-                        })
-                        .padAngle(0.01)
-                        .padRadius(innerRadius)
-                )
-                .on("mouseover", function (event, d) {
-                    const pollenType = d.key;
-                    const count = d.data[d.key];
-                    const color = checkPollenCount(pollenType, count);
-
-                    d3.select("#pollen-type").text(`Type - ${pollenType}`);
-                    d3.select("#pollen-week").text(`Week - ${d.data.Week}`);
-                    d3.select("#pollen-value")
-                        .text(`Pollen count - ${count} pollen/m³`)
-                        .style("color", color);
-
-                    const description = getPollenDescription(color);
-                    d3.select("#pollen-description").html(description);
-
-                    showPollenBackground(pollenType);
-                });
-        }
-        function drawSingleBars(key) {
-            g.selectAll(".single-bar-group").remove();
-            const singleBarGroup = g.append("g").attr("class", "single-bar-group");
-
-            y.domain([0, d3.max(data, (d) => d[key])]);
-
-            transitionYAxisOut();
-
-            singleBarGroup
-                .selectAll("path")
-                .data(data)
-                .enter()
-                .append("path")
-                .attr("fill", z(key))
-                .attr("opacity", 0)
-                .on("mouseover", function (event, d) {
-                    const count = d[key];
-                    const color = checkPollenCount(key, count);
-
-                    d3.select("#pollen-type").text(`Type - ${key}`);
-                    d3.select("#pollen-week").text(`Week - ${d.Week}`);
-                    d3.select("#pollen-value")
-                        .text(`Pollen count - ${count} pollen/m³`)
-                        .style("color", color);
-
-                    const description = getPollenDescription(color);
-                    d3.select("#pollen-description").html(description);
-                })
-                .transition()
-                .duration(1000)
-                .attr("opacity", 0.25)
-                .attr(
-                    "d",
-                    d3
-                        .arc()
-                        .innerRadius(innerRadius)
-                        .outerRadius((d) => y(d[key]))
-                        .startAngle((d) => x(d.Week))
-                        .endAngle((d) => x(d.Week) + x.bandwidth())
-                        .padAngle(0.01)
-                        .padRadius(innerRadius)
-                );
-        }
-
-        function drawDots(key = null, stacked = true) {
-            g.selectAll(".dots-group").remove();
-            let nodes = [];
-
-            if (stacked) {
-                // Stacked dots
-                let keysToUse = key ? [key] : pollenTypes;
-                const stackedData = d3.stack().keys(keysToUse)(data);
-
-                stackedData.forEach((d) => {
-                    d.forEach((datum) => {
-                        const week = datum.data.Week;
-                        const angle = x(week) + x.bandwidth() / 2 - Math.PI / 2;
-                        const inner = y(datum[0]);
-                        const outer = y(datum[1]);
-                        const count = Math.floor((datum[1] - datum[0]) * 1.5);
-
-                        for (let i = 0; i < count; i++) {
-                            const r = inner + Math.random() * (outer - inner);
-
-                            nodes.push({
-                                week: week,
-                                type: d.key,
-                                angle: angle,
-                                radius: r,
-                                color: z(d.key),
-                                x: r * Math.cos(angle) + (Math.random() - 0.7),
-                                y: r * Math.sin(angle) + (Math.random() - 0.7),
-                                r0: inner,
-                                r1: outer,
-                                a0: x(week) - Math.PI / 2,
-                                a1: x(week) + x.bandwidth() - Math.PI / 2,
-                            });
-                        }
-                    });
-                });
-            } else {
-                data.forEach((d) => {
-                    const week = d.Week;
-                    const angle = x(week) + x.bandwidth() / 2 - Math.PI / 2;
-                    const value = d[key];
-                    const inner = innerRadius;
-                    const outer = y(value);
-                    const count = Math.floor(value * 1.5);
-
-                    for (let i = 0; i < count; i++) {
-                        const r = inner + Math.random() * (outer - inner);
-                        nodes.push({
-                            week,
-                            type: key,
-                            angle,
-                            radius: r,
-                            color: z(key),
-                            x: r * Math.cos(angle) + (Math.random() - 0.7),
-                            y: r * Math.sin(angle) + (Math.random() - 0.7),
-                            r0: inner,
-                            r1: outer,
-                            a0: x(week) - Math.PI / 2,
-                            a1: x(week) + x.bandwidth() - Math.PI / 2,
-                        });
-                    }
-                });
-            }
-
-            // bee-swarm simulation
-            const simulation = d3
-                .forceSimulation(nodes)
-                .force("collide", d3.forceCollide(3).strength(2))
-                .force(
-                    "x",
-                    d3.forceX((d) => d.radius * Math.cos(d.angle)).strength(0.6)
-                )
-                .force(
-                    "y",
-                    d3.forceY((d) => d.radius * Math.sin(d.angle)).strength(0.1)
-                )
-                .force("constrain", () => forceRadialBarConstraint(nodes));
-
-            for (let i = 0; i < 100; i++) {
-                simulation.tick();
-            }
-
-            forceRadialBarConstraint(nodes);
-
-            // Draw dots
-            g.append("g")
-                .attr("class", "dots-group")
-                .selectAll("circle")
-                .data(nodes)
-                .enter()
-                .append("circle")
-                .attr("r", () => Math.random() * (1.3 - 0.6) + 0.6)
-                .attr("cx", (d) => d.x)
-                .attr("cy", (d) => d.y)
-                .attr("fill", (d) => d.color)
-                .style("opacity", 0)
-                .transition()
-                .duration(1000)
-                .style("opacity", 1);
-        }
-
-        function forceRadialBarConstraint(nodes) {
-            for (let i = 0; i < nodes.length; i++) {
-                const d = nodes[i];
-
-                // Convert Cartesian to polar
-                let r = Math.sqrt(d.x * d.x + d.y * d.y);
-                let angle = Math.atan2(d.y, d.x);
-                if (angle < 0) angle += 2 * Math.PI;
-
-                let a = (angle + 2 * Math.PI) % (2 * Math.PI);
-                let a0 = (d.a0 + 2 * Math.PI) % (2 * Math.PI);
-                let a1 = (d.a1 + 2 * Math.PI) % (2 * Math.PI);
-
-                const inArc = a0 < a1 ? a >= a0 && a <= a1 : a >= a0 || a <= a1;
-
-                const marginAngle = 0.01; // in radians (~0.57 degrees)
-
-                // Clamp angle to a slightly random offset inside the arc boundary if outside
-                if (!inArc) {
-                    const distToStart = Math.abs((a - a0 + 2 * Math.PI) % (2 * Math.PI));
-                    const distToEnd = Math.abs((a - a1 + 2 * Math.PI) % (2 * Math.PI));
-                    if (distToStart < distToEnd) {
-                        // Add a random margin inside the arc
-                        angle =
-                            d.a0 +
-                            marginAngle +
-                            Math.random() * (x.bandwidth() / 2 - marginAngle);
-                    } else {
-                        angle =
-                            d.a1 -
-                            marginAngle -
-                            Math.random() * (x.bandwidth() / 2 - marginAngle);
-                    }
-                }
-
-                const marginRadius = 2; // Adjust as needed (in pixels)
-
-                // Clamp radius to stay randomly inside the bar, away from edges
-                r =
-                    d.r0 +
-                    marginRadius +
-                    Math.random() * Math.max(0, d.r1 - d.r0 - 2 * marginRadius);
-
-                // Forcefully reposition node
-                d.x = r * Math.cos(angle);
-                d.y = r * Math.sin(angle);
-            }
-        }
 
         var label = g
             .append("g")
@@ -390,7 +127,299 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             });
 
         // clock arm
-        var date = new Date();
+        drawClockArm()
+        
+
+        legend.on("click", function (event, d) {
+            selectedKey = selectedKey === d ? null : d;
+
+            legend.selectAll(".legend-text").classed("selected", false);
+
+            transitionOut(() => {
+                addInfoBox();
+
+                if (selectedKey === null || selectedKey == "All") {
+                    d3.select(".legend-all").classed("hidden", true);
+                    updateInfoBox("About");
+                    drawStackedBars(data);
+                    drawDots(null, true, data);
+                    hidePollenBackground();
+                } else {
+                    d3.select(".legend-all").classed("hidden", false);
+                    
+                    d3.select(this).select(".legend-text").classed("selected", true);
+                    drawSingleBars(selectedKey, data);
+                    drawDots(selectedKey, false, data);
+                    showPollenBackground(selectedKey);
+                    updateInfoBox(selectedKey);
+
+                    d3.select(".legend-group").append
+                }
+            });
+            
+            
+        });
+
+        drawStackedBars(data);
+        drawDots(null, true, data);
+
+    })
+    
+
+function drawStackedBars(data) {
+    g.selectAll(".bars-group").remove();
+    const barsGroup = g.append("g").attr("class", "bars-group");
+
+    y.domain([0, 300]);
+    transitionYAxisIn();
+
+    barsGroup
+        .selectAll("g")
+        .data(d3.stack().keys(data.columns.slice(2))(data))
+        .enter()
+        .append("g")
+        .attr("fill", function (d) {
+            return z(d.key);
+        })
+        .style("opacity", 0)
+        .transition()
+        .duration(2000)
+        .style("opacity", 0.25);
+
+    barsGroup
+        .selectAll("g")
+        .selectAll("path")
+        .data(function (d) {
+            return d.map((segment) => {
+                segment.key = d.key;
+                return segment;
+            });
+        })
+        .enter()
+        .append("path")
+        .attr("class", (d) => {
+            return `bar-${d.data.Week}`;
+        })
+        .attr("d", d3.arc()
+                    .innerRadius(function (d) { return y(d[0]) })
+                    .outerRadius(function (d) { return y(d[1]) })
+                    .startAngle(function (d) { return x(d.data.Week) })
+                    .endAngle(function (d) { return x(d.data.Week) + x.bandwidth() })
+                    .padAngle(0.01)
+                    .padRadius(innerRadius)
+        )
+        .on("mouseover", function (event, d) {
+            const pollenType = d.key;
+            const count = d.data[d.key];
+            const color = checkPollenCount(pollenType, count);
+
+            d3.select("#pollen-type").text(`Type - ${pollenType}`);
+            d3.select("#pollen-week").text(`Week - ${d.data.Week}`);
+            d3.select("#pollen-value")
+                .text(`Pollen count - ${count} pollen/m³`)
+                .style("color", color);
+
+            const description = getPollenDescription(color);
+            d3.select("#pollen-description").html(description);
+
+            showPollenBackground(pollenType);
+        });
+}
+
+function drawSingleBars(key, data) {
+    g.selectAll(".single-bar-group").remove();
+    const singleBarGroup = g.append("g").attr("class", "single-bar-group");
+
+    y.domain([0, d3.max(data, (d) => d[key])]);
+
+    transitionYAxisOut();
+
+    singleBarGroup
+        .selectAll("path")
+        .data(data)
+        .enter()
+        .append("path")
+        .attr("fill", z(key))
+        .attr("opacity", 0)
+        .on("mouseover", function (event, d) {
+            const count = d[key];
+            const color = checkPollenCount(key, count);
+
+            d3.select("#pollen-type").text(`Type - ${key}`);
+            d3.select("#pollen-week").text(`Week - ${d.Week}`);
+            d3.select("#pollen-value")
+                .text(`Pollen count - ${count} pollen/m³`)
+                .style("color", color);
+
+            const description = getPollenDescription(color);
+            d3.select("#pollen-description").html(description);
+        })
+        .transition()
+        .duration(1000)
+        .attr("opacity", 0.25)
+        .attr(
+            "d",
+            d3
+                .arc()
+                .innerRadius(innerRadius)
+                .outerRadius((d) => y(d[key]))
+                .startAngle((d) => x(d.Week))
+                .endAngle((d) => x(d.Week) + x.bandwidth())
+                .padAngle(0.01)
+                .padRadius(innerRadius)
+        );
+}
+
+function drawDots(key = null, stacked = true, data) {
+    g.selectAll(".dots-group").remove();
+    let pollenTypes = data.columns.slice(2);
+    let nodes = [];
+
+    if (stacked) {
+        processStackedDots(key, nodes, data, pollenTypes);
+    } else {
+        data.forEach((d) => {
+            const week = d.Week;
+            const angle = x(week) + x.bandwidth() / 2 - Math.PI / 2;
+            const value = d[key];
+            const inner = innerRadius;
+            const outer = y(value);
+            const count = Math.floor(value * 1.5);
+
+            for (let i = 0; i < count; i++) {
+                const r = inner + Math.random() * (outer - inner);
+                nodes.push({
+                    week,
+                    type: key,
+                    angle,
+                    radius: r,
+                    color: z(key),
+                    x: r * Math.cos(angle) + (Math.random() - 0.7),
+                    y: r * Math.sin(angle) + (Math.random() - 0.7),
+                    r0: inner,
+                    r1: outer,
+                    a0: x(week) - Math.PI / 2,
+                    a1: x(week) + x.bandwidth() - Math.PI / 2,
+                });
+            }
+        });
+    }
+
+    // bee-swarm simulation
+    const simulation = d3
+        .forceSimulation(nodes)
+        .force("collide", d3.forceCollide(3).strength(2))
+        .force("x", d3.forceX((d) => d.radius * Math.cos(d.angle)).strength(0.6))
+        .force("y", d3.forceY((d) => d.radius * Math.sin(d.angle)).strength(0.1))
+        .force("constrain", () => forceRadialBarConstraint(nodes));
+
+    for (let i = 0; i < 100; i++) {
+        simulation.tick();
+    }
+
+    forceRadialBarConstraint(nodes);
+
+    // Draw dots
+    g.append("g")
+        .attr("class", "dots-group")
+        .selectAll("circle")
+        .data(nodes)
+        .enter()
+        .append("circle")
+        .attr("r", () => Math.random() * (1.3 - 0.6) + 0.6)
+        .attr("cx", (d) => d.x)
+        .attr("cy", (d) => d.y)
+        .attr("fill", (d) => d.color)
+        .style("opacity", 0)
+        .transition()
+        .duration(1000)
+        .style("opacity", 1);
+}
+
+function processStackedDots(key, nodes, data, pollenTypes) {
+    let keysToUse = key ? [key] : pollenTypes;
+    const stackedData = d3.stack().keys(keysToUse)(data);
+
+    stackedData.forEach((d) => {
+        d.forEach((datum) => {
+            const week = datum.data.Week;
+            const angle = x(week) + x.bandwidth() / 2 - Math.PI / 2;
+            const inner = y(datum[0]);
+            const outer = y(datum[1]);
+            const count = Math.floor((datum[1] - datum[0]) * 1.5);
+
+            for (let i = 0; i < count; i++) {
+                const r = inner + Math.random() * (outer - inner);
+
+                nodes.push({
+                    week: week,
+                    type: d.key,
+                    angle: angle,
+                    radius: r,
+                    color: z(d.key),
+                    x: r * Math.cos(angle) + (Math.random() - 0.7),
+                    y: r * Math.sin(angle) + (Math.random() - 0.7),
+                    r0: inner,
+                    r1: outer,
+                    a0: x(week) - Math.PI / 2,
+                    a1: x(week) + x.bandwidth() - Math.PI / 2,
+                });
+            }
+        });
+    });
+}
+
+function forceRadialBarConstraint(nodes) {
+    for (let i = 0; i < nodes.length; i++) {
+        const d = nodes[i];
+
+        // Convert Cartesian to polar
+        let r = Math.sqrt(d.x * d.x + d.y * d.y);
+        let angle = Math.atan2(d.y, d.x);
+        if (angle < 0) angle += 2 * Math.PI;
+
+        let a = (angle + 2 * Math.PI) % (2 * Math.PI);
+        let a0 = (d.a0 + 2 * Math.PI) % (2 * Math.PI);
+        let a1 = (d.a1 + 2 * Math.PI) % (2 * Math.PI);
+
+        const inArc = a0 < a1 ? a >= a0 && a <= a1 : a >= a0 || a <= a1;
+
+        const marginAngle = 0.01; // in radians (~0.57 degrees)
+
+        // Clamp angle to a slightly random offset inside the arc boundary if outside
+        if (!inArc) {
+            const distToStart = Math.abs((a - a0 + 2 * Math.PI) % (2 * Math.PI));
+            const distToEnd = Math.abs((a - a1 + 2 * Math.PI) % (2 * Math.PI));
+            if (distToStart < distToEnd) {
+                // Add a random margin inside the arc
+                angle =
+                    d.a0 +
+                    marginAngle +
+                    Math.random() * (x.bandwidth() / 2 - marginAngle);
+            } else {
+                angle =
+                    d.a1 -
+                    marginAngle -
+                    Math.random() * (x.bandwidth() / 2 - marginAngle);
+            }
+        }
+
+        const marginRadius = 2; // Adjust as needed (in pixels)
+
+        // Clamp radius to stay randomly inside the bar, away from edges
+        r =
+            d.r0 +
+            marginRadius +
+            Math.random() * Math.max(0, d.r1 - d.r0 - 2 * marginRadius);
+
+        // Forcefully reposition node
+        d.x = r * Math.cos(angle);
+        d.y = r * Math.sin(angle);
+    }
+}
+
+function drawClockArm() {
+    var date = new Date();
         const getWeek = d3.utcFormat("%V");
         const getDate = d3.utcFormat("%d/%m/%Y");
 
@@ -429,86 +458,52 @@ d3.csv("pollenData.csv", function (d, i, columns) {
             .attr("transform", function () {
                 return isLeftSide ? "rotate(180)" : null;
             });
+}
 
-        legend.on("click", function (event, d) {
-            selectedKey = selectedKey === d ? null : d;
+function transitionOut(callback) {
+    g.selectAll(".bars-group path, .single-bar-group path")
+        .transition()
+        .duration(600)
+        .attrTween("d", function (d) {
+            // Handle stacked vs single bar
+            let week, startA, endA;
+            if (d.data && d[0] !== undefined && d[1] !== undefined) {
+                // stacked
+                week = d.data.Week;
+            } else {
+                // single
+                week = d.Week;
+            }
 
-            legend.selectAll(".legend-text").classed("selected", false);
+            startA = x(week);
+            endA = startA + x.bandwidth();
 
-            transitionOut(() => {
-                addInfoBox();
+            const arc = d3
+                .arc()
+                .innerRadius(innerRadius)
+                .outerRadius(innerRadius)
+                .startAngle(startA)
+                .endAngle(endA)
+                .padAngle(0.01)
+                .padRadius(innerRadius);
 
-                if (selectedKey === null || selectedKey == "All") {
-                    d3.select(".legend-all").classed("hidden", true);
-                    updateInfoBox("About");
-                    drawStackedBars();
-                    drawDots();
-                    hidePollenBackground();
-                } else {
-                    d3.select(".legend-all").classed("hidden", false);
-                    
-                    d3.select(this).select(".legend-text").classed("selected", true);
-                    drawSingleBars(selectedKey);
-                    drawDots(selectedKey, false);
-                    showPollenBackground(selectedKey);
-                    updateInfoBox(selectedKey);
-
-                    d3.select(".legend-group").append
-                }
-            });
+            return () => arc(d);
+        })
+        .style("opacity", 0)
+        .on("end", function (_, i, nodes) {
+            if (i === nodes.length - 1) callback(); // call once when last transition ends
         });
 
-        drawStackedBars();
-        drawDots();
-
-        function transitionOut(callback) {
-            g.selectAll(".bars-group path, .single-bar-group path")
-                .transition()
-                .duration(600)
-                .attrTween("d", function (d) {
-                    // Handle stacked vs single bar
-                    let week, startA, endA;
-                    if (d.data && d[0] !== undefined && d[1] !== undefined) {
-                        // stacked
-                        week = d.data.Week;
-                    } else {
-                        // single
-                        week = d.Week;
-                    }
-
-                    startA = x(week);
-                    endA = startA + x.bandwidth();
-
-                    const arc = d3
-                        .arc()
-                        .innerRadius(innerRadius)
-                        .outerRadius(innerRadius)
-                        .startAngle(startA)
-                        .endAngle(endA)
-                        .padAngle(0.01)
-                        .padRadius(innerRadius);
-
-                    return () => arc(d);
-                })
-                .style("opacity", 0)
-                .on("end", function (_, i, nodes) {
-                    if (i === nodes.length - 1) callback(); // call once when last transition ends
-                });
-
-            g.selectAll(".dots-group circle")
-                .transition()
-                .duration(600)
-                .attr("cx", (d) => innerRadius * Math.cos(d.angle))
-                .attr("cy", (d) => innerRadius * Math.sin(d.angle))
-                .style("opacity", 0)
-                .on("end", function (_, i, nodes) {
-                    if (i === nodes.length - 1) callback(); // safeguard if dots finish last
-                });
-        }
-    })
-    .catch(function (error) {
-        throw error;
-    });
+    g.selectAll(".dots-group circle")
+        .transition()
+        .duration(600)
+        .attr("cx", (d) => innerRadius * Math.cos(d.angle))
+        .attr("cy", (d) => innerRadius * Math.sin(d.angle))
+        .style("opacity", 0)
+        .on("end", function (_, i, nodes) {
+            if (i === nodes.length - 1) callback(); // safeguard if dots finish last
+        });
+}
 
 function addTitle() {
     d3.select("body")
